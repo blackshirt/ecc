@@ -103,3 +103,6 @@ fn C.EC_KEY_get0_group(key &C.EC_KEY) &C.EC_GROUP
 
 // int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx);
 fn C.EVP_PKEY_public_check(pctx &C.EVP_PKEY_CTX) int
+
+// int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
+fn C.EVP_PKEY_copy_parameters(to &C.EVP_PKEY, from &C.EVP_PKEY) int

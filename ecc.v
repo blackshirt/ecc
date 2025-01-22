@@ -116,17 +116,23 @@ pub fn (pv &PrivateKey) free() {
 	C.EVP_PKEY_free(pv.key)
 }
 
+// int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name, const BIGNUM *bn);
+fn C.EVP_PKEY_set_bn_param(pkey &C.EVP_PKEY, key_name &u8, bn &C.BIGNUM) int 
+// int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey, const unsigned char *pub, size_t publen);
+fn C.EVP_PKEY_set1_encoded_public_key(pkey &C.EVP_PKEY, pub_data &u8, publen int) int 
+// size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub);
+fn C.EVP_PKEY_get1_encoded_public_key(pkey &C.EVP_PKEY, ppub &&u8) int 
+
 // public_key gets the public key of this PrivateKey.
 // Its returns the duplicate of this key. Dont forget to call `.free()`
 // on this public key if you've finished with them.
 pub fn (pv PrivateKey) public_key() !PublicKey {
-	k := C.EVP_PKEY_dup(pv.key)
-	if k == 0 {
-		C.EVP_PKEY_free(k)
-		return error('dup fail')
-	}
+	tokey := C.EVP_PKEY_dup(pv.key)
+	bn := C.BN_new()
+	_ := C.EVP_PKEY_set_bn_param(tokey, 'priv'.str, bn)
+	
 	return PublicKey{
-		key: k
+		key: tokey
 	}
 }
 
