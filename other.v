@@ -1,6 +1,10 @@
 module xecc
 
 #include <openssl/param_build.h>
+#include <openssl/types.h>
+#include <openssl/bio.h>
+#include <openssl/core.h>
+#include <stdio.h>
 
 // # define EVP_PKEY_KEY_PARAMETERS \ ( OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
 // # define EVP_PKEY_PRIVATE_KEY    \ ( EVP_PKEY_KEY_PARAMETERS | OSSL_KEYMGMT_SELECT_PRIVATE_KEY )
@@ -11,7 +15,7 @@ const evp_pkey_key_parameters = C.EVP_PKEY_KEY_PARAMETERS
 const evp_pkey_private_key = C.EVP_PKEY_PRIVATE_KEY
 const evp_pkey_public_key = C.EVP_PKEY_PUBLIC_KEY
 const evp_pkey_keypair = C.EVP_PKEY_KEYPAIR
-
+const pkey_param_priv_key = C.OSSL_PKEY_PARAM_PRIV_KEY
 // POINT_CONVERSION
 const point_conversion_compressed = 2
 const point_conversion_uncompressed = 4
@@ -62,6 +66,9 @@ struct C.OSSL_PARAM {}
 @[typedef]
 struct C.BIGNUM {}
 
+@[typedef]
+struct C.ASN1_PCTX {}
+
 fn load_key_from_bytes() !&C.EVP_PKEY {
 	mut pkey := C.EVP_PKEY_new()
 
@@ -84,3 +91,80 @@ fn load_key_from_bytes() !&C.EVP_PKEY {
 	// TODO: cleansup
 	return pkey
 }
+
+// int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx);
+fn C.EVP_PKEY_print_public(out &C.BIO, pkey &C.EVP_PKEY, indent int, pctx &C.ASN1_PCTX) int
+
+// int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx);
+fn C.EVP_PKEY_print_private(out &C.BIO, pkey &C.EVP_PKEY, indent int, pctx &C.ASN1_PCTX) int
+
+// int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx);
+fn C.EVP_PKEY_print_params(out &C.BIO, pkey &C.EVP_PKEY, indent int, pctx &C.ASN1_PCTX) int
+fn C.BIO_read(b &C.BIO, buf voidptr, len int) int
+fn C.BIO_gets(b &C.BIO, buf &u8, size int) int
+fn C.BN_new() &C.BIGNUM
+fn C.BIO_new_fp(stream &C.FILE, flags int) &C.BIO
+fn C.BIO_flush(b &C.BIO) int
+
+// int BIO_read_ex(BIO *b, void *data, size_t dlen, size_t *readbytes);
+fn C.BIO_read_ex(b &C.BIO, data voidptr, dlen int, readbytes &int) int
+
+@[typedef]
+struct C.FILE {}
+
+const stdout = C.stdout
+const bio_noclose = C.BIO_NOCLOSE
+
+fn (pb PublicKey) dump_key() string {
+	bo := C.BIO_new(C.BIO_s_mem())
+	n := C.EVP_PKEY_print_private(bo, pb.key, 2, 0)
+	size := 0
+	_ := C.BIO_read_ex(bo, 0, 1024, &size)
+	dump(size)
+	mut buf := []u8{len: size}
+	_ := C.BIO_read_ex(bo, buf.data, buf.len, &size)
+	dump(size)
+	output := buf[..size].clone()
+	unsafe { buf.free() }
+	C.BIO_free_all(bo)
+	return output.bytestr()
+}
+
+fn (pv PrivateKey) dump_key() string {
+	bo := C.BIO_new(C.BIO_s_mem())
+	n := C.EVP_PKEY_print_private(bo, pv.key, 2, 0)
+	size := 0
+	_ := C.BIO_read_ex(bo, 0, 1024, &size)
+	dump(size)
+	mut buf := []u8{len: size}
+	_ := C.BIO_read_ex(bo, buf.data, buf.len, &size)
+	dump(size)
+	output := buf[..size].clone()
+	unsafe { buf.free() }
+	C.BIO_free_all(bo)
+	return output.bytestr()
+}
+
+fn (pv PrivateKey) info() {
+	bn := C.BN_new()
+	n := C.EVP_PKEY_get_bn_param(pv.key, 'priv'.str, &bn)
+	num_bytes := (C.BN_num_bits(bn) + 7) / 8
+	mut buf := []u8{len: int(num_bytes)}
+	m := C.BN_bn2bin(bn, buf.data)
+	dump(m)
+	dump(buf.hex())
+	dump(priv_data.hex())
+	dump(buf.hex() == priv_data.hex())
+	dump(buf.len)
+}
+
+fn C.BN_bn2bin(a &C.BIGNUM, to &u8) int
+fn C.BN_num_bits(a &C.BIGNUM) int
+
+// int EVP_PKEY_get_bn_param(const EVP_PKEY *pkey, const char *key_name, BIGNUM **bn);
+fn C.EVP_PKEY_get_bn_param(pkey &C.EVP_PKEY, key_name &u8, bn &&C.BIGNUM) int
+
+// int EVP_PKEY_get_utf8_string_param(const EVP_PKEY *pkey, const char *key_name, char *str, size_t max_buf_sz, size_t *out_len);
+fn C.EVP_PKEY_get_utf8_string_param(pkey &C.EVP_PKEY, key_name &u8, st &u8, max_buf_sz int, outlen &int) int
+
+// int EVP_PKEY_get_octet_string_param(const EVP_PKEY *pkey, const char *key_name, unsigned char *buf, size_t max_buf_sz, size_t *out_len);

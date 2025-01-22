@@ -10,4 +10,9 @@ fn test_load_keys() ! {
 
 	pbkey := pvkey.public_key()!
 	assert pbkey.verify(signature, msg)! == true
+	dump(pbkey.dump_key())
+
+	output := pvkey.dump_key()
+	dump(output)
+	pvkey.info()
 }
