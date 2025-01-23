@@ -1,7 +1,7 @@
 module xecc
 
 fn test_key_dump() ! {
-	key := PrivateKey.new(curve: 'secp384r1')!
+	key := PrivateKey.new(nid: .secp384r1)!
 	// dump(key.dump_key())
 
 	pb := key.public_key()!
@@ -10,7 +10,7 @@ fn test_key_dump() ! {
 }
 
 fn test_load_privkey_from_bytes() ! {
-	pvkey := load_privkey_from_bytes()!
+	pvkey := PrivateKey.from_bytes()!
 
 	dump(pvkey.dump_key())
 	msg := 'MessageTobeSigned'.bytes()

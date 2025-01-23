@@ -37,32 +37,51 @@ struct C.EVP_PKEY {}
 @[typedef]
 struct C.EVP_PKEY_CTX {}
 
+// enum of supported curve(s)
+pub enum Nid {
+	prime256v1
+	secp384r1
+	secp521r1
+	secp256k1
+}
+
+fn (n Nid) str() string {
+	match n {
+		.prime256v1 { return sn_prime256v1 }
+		.secp384r1 { return sn_secp384r1 }
+		.secp521r1 { return sn_secp521r1 }
+		.secp256k1 { return sn_secp256k1 }
+	}
+}
+
 // CurveOptions was an options for driving of the key creation.
 @[params]
 pub struct CurveOptions {
 pub mut:
 	// default to NIST P-256 curve
-	curve string = sn_prime256v1
+	nid Nid = .prime256v1
 }
 
-pub enum HashOpts {
-	with_default_hash
-	with_no_prehash
+// Config of hashing way in signing (verifying) process.
+// See `SignerOpts` options for more detail.
+pub enum HashConfig {
+	with_recommended_hash
+	with_no_hash
 	with_custom_hash
 }
 
 // SignerOpts was configuration options to drive signing and verifying process.
-// Its currently supports three different scheme, in the form of `hash_opt` config:
-// - `with_default_hash`
+// Its currently supports three different scheme, in the form of `hash_config` config:
+// - `with_recommended_hash`
 //	 Its a default behaviour. By setting to this value means the signing (or verifying)
 //   routine would do precomputing the hash (digest) of the message before signing (or verifying).
 //   The default hash algorithm was choosen based on the size of underlying key,
-// - `with_no_prehash`
+// - `with_no_hash`
 //   When using this option, the signing (or verifying) routine does not perform any prehashing
 //   step to the message, and left message as is. Its also applied to messages that are already
 //   in the form of digests, which are produced outside of context.
 // - `with_custom_hash`
-//   By setting `hash_opt` into this value, its allow custom hashing routine through of
+//   By setting `hash_config` into this value, its allow custom hashing routine through of
 //   `hash.Hash` interface. By default its set to `sha256.Digest`. If you need the other one,
 //   make sure you set `custom_hash` it into your desired hash. When you choose `custom_hash` that
 //   produces hash smaller size than current key size, by default its not allowed.
@@ -71,7 +90,7 @@ pub enum HashOpts {
 @[params]
 pub struct SignerOpts {
 pub mut:
-	hash_opt           HashOpts = .with_default_hash
+	hash_config        HashConfig = .with_recommended_hash
 	allow_smaller_size bool
 	custom_hash        &hash.Hash = sha256.new()
 }
@@ -81,27 +100,25 @@ pub struct PrivateKey {
 	key &C.EVP_PKEY
 }
 
-// PrivateKey.new creates a new PrivateKey. Dont forget to call `.free()`
-// after finish with your key to prevent memleak.
+// PrivateKey.new creates a new PrivateKey. Its default to prime256v1 key.
+// Dont forget to call `.free()` after finish with your key to prevent memleak.
 pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
 	// we default to NIST P-256 prime256v1 curve.
-	mut cv := sn_prime256v1
-	match opt.curve {
-		sn_prime256v1 {}
-		sn_secp384r1 {
-			cv = sn_secp384r1
+	mut nid := Nid.prime256v1
+	match opt.nid {
+		.prime256v1 {}
+		.secp384r1 {
+			nid = .secp384r1
 		}
-		sn_secp521r1 {
-			cv = sn_secp521r1
+		.secp521r1 {
+			nid = .secp521r1
 		}
-		sn_secp256k1 {
-			cv = sn_secp256k1
-		}
-		else {
-			return error('Unsupported curve options')
+		.secp256k1 {
+			nid = .secp256k1
 		}
 	}
-	pkey := C.EVP_EC_gen(voidptr(cv.str))
+	group := nid.str()
+	pkey := C.EVP_EC_gen(group.str)
 	if pkey == 0 {
 		C.EVP_PKEY_free(pkey)
 		return error('C.EVP_EC_gen failed')
@@ -115,15 +132,6 @@ pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
 pub fn (pv &PrivateKey) free() {
 	C.EVP_PKEY_free(pv.key)
 }
-
-// int EVP_PKEY_set_bn_param(EVP_PKEY *pkey, const char *key_name, const BIGNUM *bn);
-fn C.EVP_PKEY_set_bn_param(pkey &C.EVP_PKEY, key_name &u8, bn &C.BIGNUM) int
-
-// int EVP_PKEY_set1_encoded_public_key(EVP_PKEY *pkey, const unsigned char *pub, size_t publen);
-fn C.EVP_PKEY_set1_encoded_public_key(pkey &C.EVP_PKEY, pub_data &u8, publen int) int
-
-// size_t EVP_PKEY_get1_encoded_public_key(EVP_PKEY *pkey, unsigned char **ppub);
-fn C.EVP_PKEY_get1_encoded_public_key(pkey &C.EVP_PKEY, ppub &&u8) int
 
 // public_key gets the public key of this PrivateKey.
 // Its returns the duplicate of this key. Dont forget to call `.free()`
@@ -150,11 +158,11 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 		return error('Null-length message was not allowed')
 	}
 	// signing the message without pre-hashing step
-	if opt.hash_opt == .with_no_prehash {
+	if opt.hash_config == .with_no_hash {
 		return sign_without_prehash(pv.key, msg)
 	}
 	// signing the message with provided custom hash
-	if opt.hash_opt == .with_custom_hash {
+	if opt.hash_config == .with_custom_hash {
 		mut cfg := opt
 		bits_size := C.EVP_PKEY_get_bits(pv.key)
 		if bits_size <= 0 {
@@ -225,10 +233,10 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 	if msg.len == 0 {
 		return error('Null-length message was not allowed')
 	}
-	if opt.hash_opt == .with_no_prehash {
+	if opt.hash_config == .with_no_hash {
 		return verify_without_prehash(pb.key, signature, msg)
 	}
-	if opt.hash_opt == .with_custom_hash {
+	if opt.hash_config == .with_custom_hash {
 		mut cfg := opt
 		bits_size := C.EVP_PKEY_get_bits(pb.key)
 		if bits_size <= 0 {

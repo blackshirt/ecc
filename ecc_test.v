@@ -25,7 +25,7 @@ fn test_key_sign_n_verify_without_prehash() ! {
 	sign_without_hashed := sign_without_prehash(pkey.key, msg)!
 	assert verify_without_prehash(pbkey.key, sign_without_hashed, msg)! == true
 
-	sign_nohash := pkey.sign(msg, hash_opt: .with_no_prehash)!
+	sign_nohash := pkey.sign(msg, hash_config: .with_no_hash)!
 	assert verify_without_prehash(pbkey.key, sign_nohash, msg)! == true
 
 	pkey.free()
@@ -41,7 +41,7 @@ fn test_key_signing_n_verifying_with_default_hash() ! {
 	assert pbkey.verify(sign_hashed, msg)! == true
 
 	// with different curve
-	pkey2 := PrivateKey.new(curve: 'secp384r1')!
+	pkey2 := PrivateKey.new(nid: .secp384r1)!
 	pbkey2 := pkey2.public_key()!
 	sign_hashed2 := pkey2.sign(msg)!
 	assert pbkey2.verify(sign_hashed2, msg)! == true
@@ -58,7 +58,7 @@ fn test_key_signing_n_verifying_with_custom_hash() ! {
 	msg := 'MessageTobeSigned'.bytes()
 
 	mut opt := SignerOpts{
-		hash_opt:    .with_custom_hash
+		hash_config: .with_custom_hash
 		custom_hash: sha512.new()
 	}
 	digest_with_custom_hash := opt.custom_hash.sum(msg)

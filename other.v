@@ -6,23 +6,18 @@ module xecc
 #include <openssl/core.h>
 #include <stdio.h>
 
-// # define EVP_PKEY_KEY_PARAMETERS \ ( OSSL_KEYMGMT_SELECT_ALL_PARAMETERS )
-// # define EVP_PKEY_PRIVATE_KEY    \ ( EVP_PKEY_KEY_PARAMETERS | OSSL_KEYMGMT_SELECT_PRIVATE_KEY )
-// # define EVP_PKEY_PUBLIC_KEY     \ ( EVP_PKEY_KEY_PARAMETERS | OSSL_KEYMGMT_SELECT_PUBLIC_KEY )
-// # define EVP_PKEY_KEYPAIR        \ ( EVP_PKEY_PUBLIC_KEY | OSSL_KEYMGMT_SELECT_PRIVATE_KEY )
-
+// https://docs.openssl.org/3.0/man3/EVP_PKEY_fromdata/#selections
 const evp_pkey_key_parameters = C.EVP_PKEY_KEY_PARAMETERS
-// const evp_pkey_private_key = C.EVP_PKEY_PRIVATE_KEY
 const evp_pkey_public_key = C.EVP_PKEY_PUBLIC_KEY
 const evp_pkey_keypair = C.EVP_PKEY_KEYPAIR
-const pkey_param_priv_key = C.OSSL_PKEY_PARAM_PRIV_KEY
+
 // POINT_CONVERSION
 const point_conversion_compressed = 2
 const point_conversion_uncompressed = 4
 const point_conversion_hybrid = 6
 const openssl_ec_named_curve = C.OPENSSL_EC_NAMED_CURVE
 
-// Taken from https://man.netbsd.org/EVP_PKEY_fromdata.3
+// Taken from https://docs.openssl.org/3.0/man3/EVP_PKEY_fromdata/#examples
 // Fixed data to represent the private and public key.
 const priv_data = [u8(0xb9), 0x2f, 0x3c, 0xe6, 0x2f, 0xfb, 0x45, 0x68, 0x39, 0x96, 0xf0, 0x2a,
 	0xaf, 0x6c, 0xda, 0xf2, 0x89, 0x8a, 0x27, 0xbf, 0x39, 0x9b, 0x7e, 0x54, 0x21, 0xc2, 0xa1, 0xe5,
@@ -70,7 +65,7 @@ struct C.BIGNUM {}
 @[typedef]
 struct C.ASN1_PCTX {}
 
-fn load_privkey_from_bytes() !PrivateKey {
+fn PrivateKey.from_bytes() !PrivateKey {
 	mut pkey := C.EVP_PKEY_new()
 
 	priv := C.BN_bin2bn(priv_data.data, priv_data.len, 0)
