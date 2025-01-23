@@ -28,15 +28,6 @@ const nid_ec_publickey = C.NID_X9_62_id_ecPublicKey
 // C.EVP_PKEY_EC = NID_X9_62_id_ecPublicKey
 const nid_evp_pkey_ec = C.EVP_PKEY_EC
 
-@[typedef]
-struct C.EC_KEY {}
-
-@[typedef]
-struct C.EVP_PKEY {}
-
-@[typedef]
-struct C.EVP_PKEY_CTX {}
-
 // enum of supported curve(s)
 pub enum Nid {
 	prime256v1
