@@ -1,18 +1,21 @@
 module xecc
 
 fn test_key_dump() ! {
-	pkey := PrivateKey.new()!
+	pkey := PrivateKey.new(nid: .secp384r1)!
+	pkey.info()!
 	dump(pkey.dump_key())
-	// pkey.info()
 	b := pkey.bytes()!
-	p2 := PrivateKey.from_bytes(b)!
+
+	// creates pvkey back with bytes b
+	p2 := PrivateKey.from_bytes(b, nid: .secp384r1)!
+	p2.info()!
+	dump(p2.dump_key())
 	dump(p2.bytes()!.hex())
-	dump(p2.bytes()!.len)
-	pb := pkey.public_key()!
-	dump(pb.bytes()!.hex())
-	// assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == point_conversion_compressed
-	// dump(pb.dump_key())
-	// pb.info()
+	assert p2.bytes()! == b
+
+	p3 := pkey.public_key()!
+	dump(p3.dump_key())
+	p3.info()!
 }
 
 /*

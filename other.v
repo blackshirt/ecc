@@ -9,6 +9,7 @@ const evp_pkey_keypair = C.EVP_PKEY_KEYPAIR
 const point_conversion_compressed = 2
 const point_conversion_uncompressed = 4
 const point_conversion_hybrid = 6
+// flag
 const openssl_ec_named_curve = C.OPENSSL_EC_NAMED_CURVE
 
 // Taken from https://docs.openssl.org/3.0/man3/EVP_PKEY_fromdata/#examples
@@ -24,66 +25,42 @@ const pub_data = [u8(point_conversion_uncompressed), 0xcf, 0x20, 0xfb, 0x9a, 0x1
 	0xff, 0xcb, 0x8e, 0xb6, 0x84, 0xd0, 0x24, 0x02, 0x25, 0x8f, 0xb9, 0x33, 0x6e, 0xcf, 0x12, 0x16,
 	0x2f, 0x5c, 0xcd, 0x86, 0x71, 0xa8, 0xbf, 0x1a, 0x47]
 
-fn PrivateKey.from_bytes(bytes []u8) !PrivateKey {
+fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 	mut pkey := C.EVP_PKEY_new()
 
 	priv := C.BN_bin2bn(bytes.data, bytes.len, 0)
+	group := C.EC_GROUP_new_by_curve_name(opt.nid.to_int())
+	point := ec_point_mult(group, priv)!
+	pub_bytes := point_2_buf(group, point, point_conversion_uncompressed)!
+
 	param_bld := C.OSSL_PARAM_BLD_new()
-	n := C.OSSL_PARAM_BLD_push_utf8_string(param_bld, 'group'.str, sn_prime256v1.str,
+	n := C.OSSL_PARAM_BLD_push_utf8_string(param_bld, 'group'.str, opt.nid.str().str,
 		0)
 	assert n == 1
-	nn := C.OSSL_PARAM_BLD_push_utf8_string(param_bld, 'encoding'.str, 'named_curve'.str,
-		0)
-	assert nn == 1
-	ff := C.OSSL_PARAM_BLD_push_utf8_string(param_bld, 'point-format'.str, 'uncompressed'.str,
-		0)
-	assert ff == 1
+
 	m := C.OSSL_PARAM_BLD_push_BN(param_bld, 'priv'.str, priv)
 	assert m == 1
-	// o := C.OSSL_PARAM_BLD_push_octet_string(param_bld, 'pub'.str, pub_data.data, pub_data.len)
-	// assert o == 1
+
+	o := C.OSSL_PARAM_BLD_push_octet_string(param_bld, 'pub'.str, pub_bytes.data, pub_bytes.len)
+	assert o == 1
 	params := C.OSSL_PARAM_BLD_to_param(param_bld)
 
 	pctx := C.EVP_PKEY_CTX_new_id(nid_evp_pkey_ec, 0)
 	assert pctx != 0
-	qq := C.EVP_PKEY_paramgen_init(pctx)
-	assert qq == 1
-	mmm := C.EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, nid_prime256v1)
-	assert mmm > 0
-
-	pp := C.EVP_PKEY_keygen_init(pctx)
-	assert pp == 1
-
+	
 	p := C.EVP_PKEY_fromdata_init(pctx)
 	assert p == 1
 	q := C.EVP_PKEY_fromdata(pctx, &pkey, evp_pkey_keypair, params)
 	assert q == 1
 
 	// TODO: right way to check the key, its fails on every check methods.
+
 	pvkey := PrivateKey{
 		key: pkey
 	}
 
 	// TODO: cleansup
 	return pvkey
-}
-
-fn (pb PublicKey) dump_key() string {
-	bo := C.BIO_new(C.BIO_s_mem())
-	n := C.EVP_PKEY_print_public(bo, pb.key, 2, 0)
-	assert n == 1
-	size := 0
-	mut m := C.BIO_read_ex(bo, 0, 1024, &size)
-
-	mut buf := []u8{len: size}
-	m = C.BIO_read_ex(bo, buf.data, buf.len, &size)
-	assert m == 1
-
-	output := buf[..size].clone()
-	unsafe { buf.free() }
-	C.BIO_free_all(bo)
-
-	return output.bytestr()
 }
 
 fn (pv PrivateKey) dump_params() string {
@@ -126,7 +103,8 @@ fn (pv PrivateKey) bytes() ![]u8 {
 	bn := C.BN_new()
 	n := C.EVP_PKEY_get_bn_param(pv.key, 'priv'.str, &bn)
 	if n != 1 {
-		return error('Null private key')
+		C.BN_free(bn)
+		return []u8{}
 	}
 	num_bytes := C.BN_num_bytes(bn)
 	mut privkey := []u8{len: int(num_bytes)}
@@ -136,7 +114,7 @@ fn (pv PrivateKey) bytes() ![]u8 {
 	return privkey
 }
 
-fn (pv PrivateKey) info() {
+fn (pv PrivateKey) info() ! {
 	bn := C.BN_new()
 	n := C.EVP_PKEY_get_bn_param(pv.key, 'priv'.str, &bn)
 	assert n == 1
@@ -148,17 +126,22 @@ fn (pv PrivateKey) info() {
 	dump(privkey.len)
 
 	size := 0
-	mut g := C.EVP_PKEY_get_octet_string_param(pv.key, 'pub'.str, 0, 100, &size)
-	mut pubkey := []u8{len: size}
 
-	g = C.EVP_PKEY_get_octet_string_param(pv.key, 'pub'.str, pubkey.data, pubkey.len,
+	mut g := C.EVP_PKEY_get_octet_string_param(pv.key, 'encoded-pub-key'.str, 0, 1000,
 		&size)
+	dump(g)
+	mut pubkey := []u8{len: size}
 	assert g == 1
+	// fmt || x || y
+	g = C.EVP_PKEY_get_octet_string_param(pv.key, 'encoded-pub-key'.str, pubkey.data,
+		pubkey.len, &size)
 	dump(pubkey[..size].hex())
 	dump(pubkey[..size].len)
+	conv_format := key_conversion_format(pv.key)!
+	dump(conv_format)
 }
 
-fn (pb PublicKey) info() {
+fn (pb PublicKey) info() ! {
 	bn := C.BN_new()
 	n := C.EVP_PKEY_get_bn_param(pb.key, 'priv'.str, &bn)
 	assert n == 0 // should not present
@@ -170,13 +153,46 @@ fn (pb PublicKey) info() {
 	assert buf.len == 0
 
 	size := 0
-	mut g := C.EVP_PKEY_get_octet_string_param(pb.key, 'pub'.str, 0, 800, &size)
+	mut g := C.EVP_PKEY_get_octet_string_param(pb.key, 'encoded-pub-key'.str, 0, 800,
+		&size)
 	mut pubkey := []u8{len: size}
 
-	g = C.EVP_PKEY_get_octet_string_param(pb.key, 'pub'.str, pubkey.data, pubkey.len,
-		&size)
+	g = C.EVP_PKEY_get_octet_string_param(pb.key, 'encoded-pub-key'.str, pubkey.data,
+		pubkey.len, &size)
 	assert g == 1
 
 	dump(pubkey[..size].hex())
 	dump(pubkey.len)
+	conv_format := key_conversion_format(pb.key)!
+	dump(conv_format)
+}
+
+fn (pb PublicKey) bytes() ![]u8 {
+	size := C.EVP_PKEY_get_size(pb.key)
+	mut buf := []u8{len: size}
+	mut g := C.EVP_PKEY_get_octet_string_param(pb.key, 'encoded-pub-key'.str, buf.data,
+		buf.len, &size)
+	assert g == 1
+
+	pbk_bytes := buf[..size].clone()
+	unsafe { buf.free() }
+	return pbk_bytes
+}
+
+fn (pb PublicKey) dump_key() string {
+	bo := C.BIO_new(C.BIO_s_mem())
+	n := C.EVP_PKEY_print_public(bo, pb.key, 2, 0)
+	assert n == 1
+	size := 0
+	mut m := C.BIO_read_ex(bo, 0, 1024, &size)
+
+	mut buf := []u8{len: size}
+	m = C.BIO_read_ex(bo, buf.data, buf.len, &size)
+	assert m == 1
+
+	output := buf[..size].clone()
+	unsafe { buf.free() }
+	C.BIO_free_all(bo)
+
+	return output.bytestr()
 }

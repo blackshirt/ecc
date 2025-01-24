@@ -36,6 +36,15 @@ pub enum Nid {
 	secp256k1
 }
 
+fn (n Nid) to_int() int {
+	match n {
+		.prime256v1 { return nid_prime256v1 }
+		.secp384r1 { return nid_secp384r1 }
+		.secp521r1 { return nid_secp521r1 }
+		.secp256k1 { return nid_secp256k1 }
+	}
+}
+
 fn (n Nid) str() string {
 	match n {
 		.prime256v1 { return sn_prime256v1 }
@@ -268,127 +277,4 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 	C.EVP_MD_free(tipe)
 
 	return fin == 1
-}
-
-// Helpers
-//
-// default_digest gets the default digest opaque for this key.
-fn default_digest(key &C.EVP_PKEY) !&C.EVP_MD {
-	// get bits size of this key
-	bits_size := C.EVP_PKEY_get_bits(key)
-	if bits_size <= 0 {
-		return error(' this size isnt available.')
-	}
-	// based on this bits_size, choose appropriate digest
-	match true {
-		bits_size <= 256 {
-			return voidptr(C.EVP_sha256())
-		}
-		bits_size > 256 && bits_size <= 384 {
-			return voidptr(C.EVP_sha384())
-		}
-		bits_size > 384 {
-			return voidptr(C.EVP_sha512())
-		}
-		else {
-			return error('Unsupported bits size')
-		}
-	}
-	return error('should not here')
-}
-
-// sign the message with the key without pre-hashing, left the message as is.
-// You can treat if the msg was also digest output from other process.
-fn sign_without_prehash(key &C.EVP_PKEY, msg []u8) ![]u8 {
-	if key == unsafe { nil } {
-		return error('nil key')
-	}
-	ctx := C.EVP_PKEY_CTX_new(key, 0)
-	if ctx == 0 {
-		C.EVP_PKEY_CTX_free(ctx)
-		return error('Fails on EVP_PKEY_CTX_new')
-	}
-	sin := C.EVP_PKEY_sign_init(ctx)
-	if sin != 1 {
-		C.EVP_PKEY_CTX_free(ctx)
-		return error('fails on EVP_PKEY_sign_init')
-	}
-	// siglen to store the size of the signature
-	mut siglen := usize(0)
-	// when EVP_PKEY_sign called with NULL sig, siglen will tell maximum size
-	// of signature.
-	st := C.EVP_PKEY_sign(ctx, 0, &siglen, msg.data, msg.len)
-	if st != 1 {
-		C.EVP_PKEY_CTX_free(ctx)
-		return error('Get null buffer length on EVP_PKEY_sign')
-	}
-	sig := []u8{len: int(siglen)}
-	do := C.EVP_PKEY_sign(ctx, sig.data, &siglen, msg.data, msg.len)
-	if do != 1 {
-		C.EVP_PKEY_CTX_free(ctx)
-		return error('EVP_PKEY_sign fails to sign message')
-	}
-	// siglen now contains actual length of the sig buffer.
-	signed := sig[..siglen].clone()
-
-	// Cleans up
-	unsafe { sig.free() }
-	C.EVP_PKEY_CTX_free(ctx)
-
-	return signed
-}
-
-// verify_without_prehash verifies the signature for the message under the provided key.
-fn verify_without_prehash(key &C.EVP_PKEY, sig []u8, msg []u8) !bool {
-	ctx := C.EVP_PKEY_CTX_new(key, 0)
-	if ctx == 0 {
-		C.EVP_PKEY_CTX_free(ctx)
-		return error('Fails on EVP_PKEY_CTX_new')
-	}
-	vinit := C.EVP_PKEY_verify_init(ctx)
-	if vinit != 1 {
-		C.EVP_PKEY_CTX_free(ctx)
-		return error('fails on EVP_PKEY_verify_init')
-	}
-	res := C.EVP_PKEY_verify(ctx, sig.data, sig.len, msg.data, msg.len)
-	if res <= 0 {
-		C.EVP_PKEY_CTX_free(ctx)
-		return error('Failed to verify signature')
-	}
-	C.EVP_PKEY_CTX_free(ctx)
-	return res == 1
-}
-
-// get type name of the key.
-// Its return type of the key, ie, `EC`, `DSA`, `RSA` or other value.
-fn key_type_name(key &C.EVP_PKEY) !string {
-	s := voidptr(C.EVP_PKEY_get0_type_name(key))
-	if s == 0 {
-		return error('fail to get type name')
-	}
-	tpname := unsafe { tos3(s) }
-	return tpname
-}
-
-// get the human readable description from the key.
-fn key_description(key &C.EVP_PKEY) !string {
-	s := voidptr(C.EVP_PKEY_get0_description(key))
-	if s == 0 {
-		return error('fail to get key description')
-	}
-	desc := unsafe { tos3(s) }
-	return desc
-}
-
-// key_group_name gets the underlying group of the key as a string.
-fn key_group_name(key &C.EVP_PKEY) !string {
-	gname := []u8{len: 50}
-	mut gname_len := usize(0)
-	s := C.EVP_PKEY_get_group_name(key, gname.data, u32(gname.len), &gname_len)
-	if s == 0 {
-		return error('fail to get group name')
-	}
-	group := gname[..gname_len].clone().bytestr()
-	unsafe { gname.free() }
-	return group
 }

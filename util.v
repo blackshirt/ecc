@@ -2,35 +2,6 @@ module xecc
 
 // This file contains utility to load PrivateKey and PublicKey
 // from PEM formatted string.
-//
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/bio.h>
-#include <openssl/pem.h>
-
-@[typedef]
-struct C.BIO_METHOD {}
-
-@[typedef]
-pub struct C.BIO {}
-
-// BIO *  BIO_new(BIO_METHOD *type);
-fn C.BIO_new(t &C.BIO_METHOD) &C.BIO
-
-// void   BIO_free_all(BIO *a);
-fn C.BIO_free_all(a &C.BIO)
-
-// BIO_METHOD *   BIO_s_mem(void);
-fn C.BIO_s_mem() &C.BIO_METHOD
-
-// int    BIO_write(BIO *b, const void *buf, int len);
-fn C.BIO_write(b &C.BIO, buf &u8, length int) int
-
-// EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x,  pem_password_cb *cb, void *u);
-fn C.PEM_read_bio_PrivateKey(bp &C.BIO, x &&C.EVP_PKEY, cb int, u &voidptr) &C.EVP_PKEY
-
-// EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u);
-fn C.PEM_read_bio_PUBKEY(bp &C.BIO, x &&C.EVP_PKEY, cb int, u &voidptr) &C.EVP_PKEY
 
 // PrivateKey.from_string loads a PrivateKey from valid PEM-formatted string in s.
 pub fn PrivateKey.from_string(s string) !PrivateKey {

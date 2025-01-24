@@ -16,6 +16,9 @@ module xecc
 #include <openssl/types.h>
 #include <openssl/bio.h>
 #include <openssl/core.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/bn.h>
 
 @[typedef]
 struct C.EVP_PKEY {}
@@ -61,6 +64,7 @@ fn C.EVP_PKEY_get_octet_string_param(pkey &C.EVP_PKEY, key_name &u8, buf &u8, ma
 fn C.EVP_PKEY_set_octet_string_param(pkey &C.EVP_PKEY, key_name &u8, buf &u8, bsize int) int
 fn C.EVP_PKEY_fromdata_init(ctx &C.EVP_PKEY_CTX) int
 fn C.EVP_PKEY_fromdata(ctx &C.EVP_PKEY_CTX, ppkey &&C.EVP_PKEY, selection int, params &C.OSSL_PARAM) int
+fn C.EVP_PKEY_get1_encoded_public_key(key &C.EVP_PKEY, ppub &&u8) int
 
 fn C.i2d_PUBKEY_bio(bo &C.BIO, pkey &C.EVP_PKEY) int
 fn C.d2i_PUBKEY_bio(bo &C.BIO, key &&C.EVP_PKEY) &C.EVP_PKEY
@@ -75,11 +79,38 @@ fn C.EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx &C.EVP_PKEY_CTX, nid int) int //
 fn C.EVP_PKEY_CTX_set_ec_param_enc(ctx &C.EVP_PKEY_CTX, prm int) int
 fn C.EVP_PKEY_CTX_new_from_pkey(libctx voidptr, pkey &C.EVP_PKEY, pq voidptr) &C.EVP_PKEY_CTX
 
+@[typedef]
+struct C.BIO_METHOD {}
+
+@[typedef]
+pub struct C.BIO {}
+
+fn C.BIO_new(t &C.BIO_METHOD) &C.BIO
 fn C.BIO_read(b &C.BIO, buf voidptr, len int) int
 fn C.BIO_gets(b &C.BIO, buf &u8, size int) int
 fn C.BIO_read_ex(b &C.BIO, data voidptr, dlen int, readbytes &int) int
 fn C.BIO_flush(b &C.BIO) int
 fn C.BIO_free_all(a &C.BIO)
+fn C.BIO_s_mem() &C.BIO_METHOD
+fn C.BIO_write(b &C.BIO, buf &u8, length int) int
+
+fn C.PEM_read_bio_PrivateKey(bp &C.BIO, x &&C.EVP_PKEY, cb int, u &voidptr) &C.EVP_PKEY
+fn C.PEM_read_bio_PUBKEY(bp &C.BIO, x &&C.EVP_PKEY, cb int, u &voidptr) &C.EVP_PKEY
+
+@[typedef]
+struct C.EC_POINT {}
+
+fn C.EC_POINT_new(group &C.EC_GROUP) &C.EC_POINT
+fn C.EC_POINT_mul(group &C.EC_GROUP, r &C.EC_POINT, n &C.BIGNUM, q &C.EC_POINT, m &C.BIGNUM, ctx &C.BN_CTX) int
+fn C.EC_POINT_cmp(group &C.EC_GROUP, a &C.EC_POINT, b &C.EC_POINT, ctx &C.BN_CTX) int
+fn C.EC_POINT_free(point &C.EC_POINT)
+fn C.EC_POINT_point2buf(group &C.EC_GROUP, point &C.EC_POINT, form int, pbuf &&u8, ctx &C.BN_CTX) int
+
+@[typedef]
+struct C.BN_CTX {}
+
+fn C.BN_CTX_new() &C.BN_CTX
+fn C.BN_CTX_free(ctx &C.BN_CTX)
 
 @[typedef]
 struct C.BIGNUM {}
@@ -104,14 +135,19 @@ fn C.OSSL_PARAM_BLD_push_utf8_string(bld &C.OSSL_PARAM_BLD, key &u8, buf &u8, bs
 fn C.OSSL_PARAM_BLD_push_BN(bld &C.OSSL_PARAM_BLD, key &u8, bn &C.BIGNUM) int
 fn C.OSSL_PARAM_BLD_push_octet_string(bld &C.OSSL_PARAM_BLD, key &u8, buf voidptr, bsize int) int
 fn C.OSSL_PARAM_BLD_to_param(bld &C.OSSL_PARAM_BLD) &C.OSSL_PARAM
+fn C.OSSL_PARAM_BLD_push_int(bld &C.OSSL_PARAM_BLD, key &u8, val int) int
+
+// const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey);
+fn C.EVP_PKEY_gettable_params(key &C.EVP_PKEY) &C.OSSL_PARAM
 
 @[typedef]
 struct C.EC_GROUP {}
 
-fn C.EC_GROUP_get_curve_name(g &C.EC_GROUP) int
 fn C.EC_GROUP_free(group &C.EC_GROUP)
 fn C.EC_GROUP_get_degree(g &C.EC_GROUP) int
 fn C.EC_GROUP_get_curve_name(g &C.EC_GROUP) int
+fn C.EC_GROUP_new_by_curve_name(nid int) &C.EC_GROUP
+fn C.EC_GROUP_check(group &C.EC_GROUP, ctx &C.BN_CTX) int
 
 @[typedef]
 struct C.EC_KEY {}
