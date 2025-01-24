@@ -76,7 +76,7 @@ pub fn PrivateKey.from_string(s string) !PrivateKey {
 		return error('EVP_PKEY_check failed')
 	}
 	// Matching the supported group
-	group_name := get_group_name(evpkey)!
+	group_name := key_group_name(evpkey)!
 	if group_name != sn_secp256k1 && group_name != sn_secp384r1 && group_name != sn_prime256v1
 		&& group_name != sn_prime256v1 {
 		C.BIO_free_all(bo)
@@ -138,7 +138,7 @@ pub fn PublicKey.from_string(s string) !PublicKey {
 		return error('EVP_PKEY_public_check failed')
 	}
 	// Matching the supported group
-	group_name := get_group_name(evpkey)!
+	group_name := key_group_name(evpkey)!
 	if group_name != sn_secp256k1 && group_name != sn_secp384r1 && group_name != sn_prime256v1
 		&& group_name != sn_prime256v1 {
 		C.BIO_free_all(bo)

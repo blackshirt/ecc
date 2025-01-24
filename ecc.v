@@ -361,7 +361,7 @@ fn verify_without_prehash(key &C.EVP_PKEY, sig []u8, msg []u8) !bool {
 
 // get type name of the key.
 // Its return type of the key, ie, `EC`, `DSA`, `RSA` or other value.
-fn get_key_type_name(key &C.EVP_PKEY) !string {
+fn key_type_name(key &C.EVP_PKEY) !string {
 	s := voidptr(C.EVP_PKEY_get0_type_name(key))
 	if s == 0 {
 		return error('fail to get type name')
@@ -371,7 +371,7 @@ fn get_key_type_name(key &C.EVP_PKEY) !string {
 }
 
 // get the human readable description from the key.
-fn get_key_description(key &C.EVP_PKEY) !string {
+fn key_description(key &C.EVP_PKEY) !string {
 	s := voidptr(C.EVP_PKEY_get0_description(key))
 	if s == 0 {
 		return error('fail to get key description')
@@ -380,8 +380,8 @@ fn get_key_description(key &C.EVP_PKEY) !string {
 	return desc
 }
 
-// get_group_name gets the underlying group of the key as a string.
-fn get_group_name(key &C.EVP_PKEY) !string {
+// key_group_name gets the underlying group of the key as a string.
+fn key_group_name(key &C.EVP_PKEY) !string {
 	gname := []u8{len: 50}
 	mut gname_len := usize(0)
 	s := C.EVP_PKEY_get_group_name(key, gname.data, u32(gname.len), &gname_len)

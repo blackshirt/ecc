@@ -24,10 +24,10 @@ const pub_data = [u8(point_conversion_uncompressed), 0xcf, 0x20, 0xfb, 0x9a, 0x1
 	0xff, 0xcb, 0x8e, 0xb6, 0x84, 0xd0, 0x24, 0x02, 0x25, 0x8f, 0xb9, 0x33, 0x6e, 0xcf, 0x12, 0x16,
 	0x2f, 0x5c, 0xcd, 0x86, 0x71, 0xa8, 0xbf, 0x1a, 0x47]
 
-fn PrivateKey.from_bytes() !PrivateKey {
+fn PrivateKey.from_bytes(bytes []u8) !PrivateKey {
 	mut pkey := C.EVP_PKEY_new()
 
-	priv := C.BN_bin2bn(priv_data.data, priv_data.len, 0)
+	priv := C.BN_bin2bn(bytes.data, bytes.len, 0)
 	param_bld := C.OSSL_PARAM_BLD_new()
 	n := C.OSSL_PARAM_BLD_push_utf8_string(param_bld, 'group'.str, sn_prime256v1.str,
 		0)
@@ -40,8 +40,8 @@ fn PrivateKey.from_bytes() !PrivateKey {
 	assert ff == 1
 	m := C.OSSL_PARAM_BLD_push_BN(param_bld, 'priv'.str, priv)
 	assert m == 1
-	o := C.OSSL_PARAM_BLD_push_octet_string(param_bld, 'pub'.str, pub_data.data, pub_data.len)
-	assert o == 1
+	// o := C.OSSL_PARAM_BLD_push_octet_string(param_bld, 'pub'.str, pub_data.data, pub_data.len)
+	// assert o == 1
 	params := C.OSSL_PARAM_BLD_to_param(param_bld)
 
 	pctx := C.EVP_PKEY_CTX_new_id(nid_evp_pkey_ec, 0)
@@ -122,26 +122,40 @@ fn (pv PrivateKey) dump_key() string {
 	return output.bytestr()
 }
 
+fn (pv PrivateKey) bytes() ![]u8 {
+	bn := C.BN_new()
+	n := C.EVP_PKEY_get_bn_param(pv.key, 'priv'.str, &bn)
+	if n != 1 {
+		return error('Null private key')
+	}
+	num_bytes := C.BN_num_bytes(bn)
+	mut privkey := []u8{len: int(num_bytes)}
+	m := C.BN_bn2bin(bn, privkey.data)
+	assert m != 0
+	C.BN_free(bn)
+	return privkey
+}
+
 fn (pv PrivateKey) info() {
 	bn := C.BN_new()
 	n := C.EVP_PKEY_get_bn_param(pv.key, 'priv'.str, &bn)
 	assert n == 1
 	num_bytes := C.BN_num_bytes(bn)
-	mut buf := []u8{len: int(num_bytes)}
-	m := C.BN_bn2bin(bn, buf.data)
+	mut privkey := []u8{len: int(num_bytes)}
+	m := C.BN_bn2bin(bn, privkey.data)
 	assert m != 0
-	dump(buf.hex())
-	dump(priv_data.hex())
-	dump(buf.hex() == priv_data.hex())
-	dump(buf.len)
+	dump(privkey.hex())
+	dump(privkey.len)
 
 	size := 0
 	mut g := C.EVP_PKEY_get_octet_string_param(pv.key, 'pub'.str, 0, 100, &size)
-	mut buf2 := []u8{len: size}
+	mut pubkey := []u8{len: size}
 
-	g = C.EVP_PKEY_get_octet_string_param(pv.key, 'pub'.str, buf2.data, buf2.len, &size)
+	g = C.EVP_PKEY_get_octet_string_param(pv.key, 'pub'.str, pubkey.data, pubkey.len,
+		&size)
 	assert g == 1
-	dump(buf2.hex())
+	dump(pubkey[..size].hex())
+	dump(pubkey[..size].len)
 }
 
 fn (pb PublicKey) info() {
@@ -152,16 +166,17 @@ fn (pb PublicKey) info() {
 	mut buf := []u8{len: int(num_bytes)}
 	m := C.BN_bn2bin(bn, buf.data)
 	assert m == 0
-	dump(buf.hex())
-	dump(buf.len)
+	assert buf.hex() == ''
+	assert buf.len == 0
 
 	size := 0
 	mut g := C.EVP_PKEY_get_octet_string_param(pb.key, 'pub'.str, 0, 800, &size)
-	mut buf2 := []u8{len: size}
+	mut pubkey := []u8{len: size}
 
-	g = C.EVP_PKEY_get_octet_string_param(pb.key, 'pub'.str, buf2.data, buf2.len, &size)
+	g = C.EVP_PKEY_get_octet_string_param(pb.key, 'pub'.str, pubkey.data, pubkey.len,
+		&size)
 	assert g == 1
 
-	dump(buf2.hex())
-	dump(buf2.len)
+	dump(pubkey[..size].hex())
+	dump(pubkey.len)
 }

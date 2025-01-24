@@ -9,11 +9,11 @@ fn test_pvkey_new() ! {
 	assert C.EVP_PKEY_get_id(pkey.key) == nid_ec_publickey
 	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == 4
 	assert C.EVP_PKEY_get_size(pkey.key) >= 2 * 32 // twice of key size
-	assert get_key_type_name(pkey.key)! == 'EC' // its type of EC key
-	assert get_key_description(pkey.key)! == 'OpenSSL EC implementation'
-	assert get_group_name(pkey.key)! == sn_prime256v1 // prime256v1
+	assert key_type_name(pkey.key)! == 'EC' // its type of EC key
+	assert key_description(pkey.key)! == 'OpenSSL EC implementation'
+	assert key_group_name(pkey.key)! == sn_prime256v1 // prime256v1
 	assert C.EVP_PKEY_get_security_bits(pkey.key) == 128
-
+	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == point_conversion_uncompressed
 	pkey.free()
 }
 
