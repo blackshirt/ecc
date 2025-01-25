@@ -1,32 +1,51 @@
 module xecc
 
+fn test_create_private_key_from_bytes() ! {
+	// Taken from https://docs.openssl.org/3.0/man3/EVP_PKEY_fromdata/#examples
+	// Fixed data to represent the private and public key.
+	priv_data := [u8(0xb9), 0x2f, 0x3c, 0xe6, 0x2f, 0xfb, 0x45, 0x68, 0x39, 0x96, 0xf0, 0x2a, 0xaf,
+		0x6c, 0xda, 0xf2, 0x89, 0x8a, 0x27, 0xbf, 0x39, 0x9b, 0x7e, 0x54, 0x21, 0xc2, 0xa1, 0xe5,
+		0x36, 0x12, 0x48, 0x5d]
+
+	// UNCOMPRESSED FORMAT */
+	pub_data := [u8(point_conversion_uncompressed), 0xcf, 0x20, 0xfb, 0x9a, 0x1d, 0x11, 0x6c, 0x5e,
+		0x9f, 0xec, 0x38, 0x87, 0x6c, 0x1d, 0x2f, 0x58, 0x47, 0xab, 0xa3, 0x9b, 0x79, 0x23, 0xe6,
+		0xeb, 0x94, 0x6f, 0x97, 0xdb, 0xa3, 0x7d, 0xbd, 0xe5, 0x26, 0xca, 0x07, 0x17, 0x8d, 0x26,
+		0x75, 0xff, 0xcb, 0x8e, 0xb6, 0x84, 0xd0, 0x24, 0x02, 0x25, 0x8f, 0xb9, 0x33, 0x6e, 0xcf,
+		0x12, 0x16, 0x2f, 0x5c, 0xcd, 0x86, 0x71, 0xa8, 0xbf, 0x1a, 0x47]
+
+	pvkey := PrivateKey.from_bytes(priv_data)!
+	assert pvkey.bytes()!.hex() == priv_data.hex()
+
+	pbkey := pvkey.public_key()!
+	assert pbkey.bytes()! == pub_data
+
+	// Lets signing and verifying message
+	msg := 'MessageTobeSigned'.bytes()
+	signature := pvkey.sign(msg)!
+
+	status := pbkey.verify(signature, msg)!
+	assert status == true
+
+	pvkey.free()
+	pbkey.free()
+}
+
 fn test_key_dump() ! {
 	pkey := PrivateKey.new(nid: .secp384r1)!
-	pkey.info()!
-	dump(pkey.dump_key())
+	dump(pkey.dump_key()!)
 	b := pkey.bytes()!
 
 	// creates pvkey back with bytes b
 	p2 := PrivateKey.from_bytes(b, nid: .secp384r1)!
-	p2.info()!
-	dump(p2.dump_key())
-	dump(p2.bytes()!.hex())
+
+	dump(p2.dump_key()!)
 	assert p2.bytes()! == b
 
 	p3 := pkey.public_key()!
-	dump(p3.dump_key())
-	p3.info()!
+	dump(p3.dump_key()!)
+
+	pkey.free()
+	p2.free()
+	p3.free()
 }
-
-/*
-fn test_load_privkey_from_bytes() ! {
-	pvkey := PrivateKey.from_bytes()!
-
-	dump(pvkey.dump_key())
-	msg := 'MessageTobeSigned'.bytes()
-	signature := pvkey.sign(msg)!
-
-	pbkey := pvkey.public_key()!
-	assert pbkey.verify(signature, msg)! == true
-}
-*/

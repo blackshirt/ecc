@@ -60,7 +60,7 @@ fn C.EVP_PKEY_print_params(out &C.BIO, pkey &C.EVP_PKEY, indent int, pctx voidpt
 fn C.EVP_PKEY_get_bn_param(pkey &C.EVP_PKEY, key_name &u8, bn &&C.BIGNUM) int
 fn C.EVP_PKEY_set_bn_param(pkey &C.EVP_PKEY, key_name &u8, bn &C.BIGNUM) int
 fn C.EVP_PKEY_get_utf8_string_param(pkey &C.EVP_PKEY, key_name &u8, st &u8, max_buf_sz int, outlen &int) int
-fn C.EVP_PKEY_get_octet_string_param(pkey &C.EVP_PKEY, key_name &u8, buf &u8, max_buf_sz int, out_len &int) int
+fn C.EVP_PKEY_get_octet_string_param(pkey &C.EVP_PKEY, key_name &u8, buf &u8, max_buf_sz int, out_len &usize) int
 fn C.EVP_PKEY_set_octet_string_param(pkey &C.EVP_PKEY, key_name &u8, buf &u8, bsize int) int
 fn C.EVP_PKEY_fromdata_init(ctx &C.EVP_PKEY_CTX) int
 fn C.EVP_PKEY_fromdata(ctx &C.EVP_PKEY_CTX, ppkey &&C.EVP_PKEY, selection int, params &C.OSSL_PARAM) int
@@ -88,7 +88,7 @@ pub struct C.BIO {}
 fn C.BIO_new(t &C.BIO_METHOD) &C.BIO
 fn C.BIO_read(b &C.BIO, buf voidptr, len int) int
 fn C.BIO_gets(b &C.BIO, buf &u8, size int) int
-fn C.BIO_read_ex(b &C.BIO, data voidptr, dlen int, readbytes &int) int
+fn C.BIO_read_ex(b &C.BIO, data voidptr, dlen int, readbytes &usize) int
 fn C.BIO_flush(b &C.BIO) int
 fn C.BIO_free_all(a &C.BIO)
 fn C.BIO_s_mem() &C.BIO_METHOD
@@ -187,3 +187,5 @@ fn C.EVP_DigestSignFinal(ctx &C.EVP_MD_CTX, sig &u8, siglen &usize) int
 fn C.EVP_DigestVerifyInit(ctx &C.EVP_MD_CTX, pctx &&C.EVP_PKEY_CTX, tipe &C.EVP_MD, e voidptr, pkey &C.EVP_PKEY) int
 fn C.EVP_DigestVerifyUpdate(ctx &C.EVP_MD_CTX, d voidptr, cnt int) int
 fn C.EVP_DigestVerifyFinal(ctx &C.EVP_MD_CTX, sig &u8, siglen int) int
+
+fn C.OPENSSL_free(addr voidptr)

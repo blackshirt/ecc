@@ -28,32 +28,6 @@ const nid_ec_publickey = C.NID_X9_62_id_ecPublicKey
 // C.EVP_PKEY_EC = NID_X9_62_id_ecPublicKey
 const nid_evp_pkey_ec = C.EVP_PKEY_EC
 
-// enum of supported curve(s)
-pub enum Nid {
-	prime256v1
-	secp384r1
-	secp521r1
-	secp256k1
-}
-
-fn (n Nid) to_int() int {
-	match n {
-		.prime256v1 { return nid_prime256v1 }
-		.secp384r1 { return nid_secp384r1 }
-		.secp521r1 { return nid_secp521r1 }
-		.secp256k1 { return nid_secp256k1 }
-	}
-}
-
-fn (n Nid) str() string {
-	match n {
-		.prime256v1 { return sn_prime256v1 }
-		.secp384r1 { return sn_secp384r1 }
-		.secp521r1 { return sn_secp521r1 }
-		.secp256k1 { return sn_secp256k1 }
-	}
-}
-
 // CurveOptions was an options for driving of the key creation.
 @[params]
 pub struct CurveOptions {
@@ -118,7 +92,7 @@ pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
 		}
 	}
 	group := nid.str()
-	pkey := C.EVP_EC_gen(group.str)
+	pkey := C.EVP_EC_gen(voidptr(group.str))
 	if pkey == 0 {
 		C.EVP_PKEY_free(pkey)
 		return error('C.EVP_EC_gen failed')
@@ -133,14 +107,15 @@ pub fn (pv &PrivateKey) free() {
 	C.EVP_PKEY_free(pv.key)
 }
 
-// public_key gets the public key of this PrivateKey.
-// Its returns the duplicate of this key. Dont forget to call `.free()`
+// public_key gets the public key from this PrivateKey.
+// Its returns the new public key witth stripped private key bits.
+// Dont forget to call `.free()`
 // on this public key if you've finished with them.
 pub fn (pv PrivateKey) public_key() !PublicKey {
 	bo := C.BIO_new(C.BIO_s_mem())
 	n := C.i2d_PUBKEY_bio(bo, pv.key)
 	assert n != 0
-
+	// stores this bio as another key
 	pbkey := C.d2i_PUBKEY_bio(bo, 0)
 	C.BIO_free_all(bo)
 
@@ -277,4 +252,51 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 	C.EVP_MD_free(tipe)
 
 	return fin == 1
+}
+
+// enum of supported curve(s)
+pub enum Nid {
+	prime256v1
+	secp384r1
+	secp521r1
+	secp256k1
+}
+
+// size returns the size of the key under the current NID curve.
+// Its here for simplify the access.
+fn (n Nid) size() int {
+	match n {
+		.prime256v1 {
+			return 32
+		}
+		.secp256k1 {
+			return 32
+		}
+		.secp384r1 {
+			return 48
+		}
+		.secp521r1 {
+			return 64
+		}
+	}
+}
+
+// get underlying NID
+fn (n Nid) to_int() int {
+	match n {
+		.prime256v1 { return nid_prime256v1 }
+		.secp384r1 { return nid_secp384r1 }
+		.secp521r1 { return nid_secp521r1 }
+		.secp256k1 { return nid_secp256k1 }
+	}
+}
+
+// get string representation of this Nid
+fn (n Nid) str() string {
+	match n {
+		.prime256v1 { return sn_prime256v1 }
+		.secp384r1 { return sn_secp384r1 }
+		.secp521r1 { return sn_secp521r1 }
+		.secp256k1 { return sn_secp256k1 }
+	}
 }

@@ -110,12 +110,14 @@ fn key_description(key &C.EVP_PKEY) !string {
 	return desc
 }
 
+const default_groupname_bufsize = 25 // short name commonly only take 10-15 length
 // key_group_name gets the underlying group of the key as a string.
 fn key_group_name(key &C.EVP_PKEY) !string {
-	gname := []u8{len: 50}
-	mut gname_len := usize(0)
-	s := C.EVP_PKEY_get_group_name(key, gname.data, u32(gname.len), &gname_len)
+	gname := []u8{len: default_groupname_bufsize}
+	gname_len := usize(0)
+	mut s := C.EVP_PKEY_get_group_name(key, gname.data, u32(gname.len), &gname_len)
 	if s == 0 {
+		unsafe { gname.free() }
 		return error('fail to get group name')
 	}
 	group := gname[..gname_len].clone().bytestr()
@@ -153,13 +155,21 @@ fn ec_point_mult(group &C.EC_GROUP, bn &C.BIGNUM) !&C.EC_POINT {
 	return point
 }
 
+const default_pointconv_bufsize = 160 // 2 * 64 + 1 + extra
+
 fn point_2_buf(group &C.EC_GROUP, point &C.EC_POINT, fmt int) ![]u8 {
 	ctx := C.BN_CTX_new()
-	buf := []u8{len: 512}
+	buf := []u8{len: default_pointconv_bufsize}
 	n := C.EC_POINT_point2buf(group, point, fmt, voidptr(&buf.data), ctx)
-	dump(n)
+	if n <= 0 {
+		C.BN_CTX_free(ctx)
+		C.OPENSSL_free(voidptr(&buf.data))
+		return error('Get null length of buf')
+	}
+	// mut dst := []u8{len: n}
+	//_ := copy(mut dst, buf)
 	result := buf[..n].clone()
-	unsafe { buf.free() }
+	C.OPENSSL_free(voidptr(buf.data))
 	C.BN_CTX_free(ctx)
 	return result
 }
