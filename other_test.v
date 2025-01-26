@@ -1,5 +1,6 @@
 module xecc
 
+import crypto.sha1
 import crypto.sha256
 import encoding.hex
 
@@ -37,39 +38,42 @@ fn test_create_private_key_from_bytes() ! {
 fn test_prime256v1_curve_sign_verify_custom_hash() ! {
 	// Key material generated from https://kjur.github.io/jsrsasign/sample/sample-ecdsa.html
 	// Samples for p256 key
-	privdata := hex.decode('71905fb111cafbef42eb292ffdbee1ef74ed34b36d016e15e21478d072ef2e4f')!
-	pubddata := hex.decode('04c82ae3fe911aa6cf7009261f95bacaf2fd4376985e90b8abb1795b1c8453a5ff39d5fb8864f9c050703e07b16c09b7d854b9351c3a88ac58bb7fe602bc5ab848')!
+	privdata := hex.decode('882048fcdce8d6da649b92f2b6b26d7d7aeee7da605a6f3772ca7b86d56b16ba')!
+	pubddata := hex.decode('04b6a24f68639b8b4f925ae019022090ac34457f9ab3bfe99738f284455de9512097863b87fa7712edca68e63ac2188efe60273a46d5b8b709c462faa051668e6a')!
 	// the tool only support sha256 and sha1 hash
 	msg := 'aaa'.bytes()
 	// signature created with SHA256
-	signature := hex.decode('3045022100ea90dcb574fdeb18be7aefa37a07615ff65b03252838df16a5482baa6c4a8f1d02202506a7548cbebb238799c58e1a78f67455f1136366a09a6c3e867cbf3eebf880')!
+	signature := hex.decode('3045022045e3228132c3fd889b110599786d9536deaf8647a6cf886710e62ab5ad56164d0221008ad95a4218d364e57e0843b7e9d04312955a1e001b4295dce4805de00b1e36e1')!
 	pvkey := PrivateKey.from_bytes(privdata)!
 
 	pbkey := pvkey.public_key()!
 	signed_default := pvkey.sign(msg)!
 
-	// First case: sign and verify without prehash step
+	// 1st case: sign and verify without prehash step
 	sig0 := sign_without_prehash(pvkey.key, msg)!
 	valid0 := verify_without_prehash(pbkey.key, sig0, msg)!
-	dump(valid0 == true)
+	assert valid0 == true
 	// lets compares with pbkey.sign with no hash
-	valid0_1 := pbkey.verify(sig0, msg, hash_config: .with_no_hash)!
-	dump(valid0_1 == true)
+	opt0 := SignerOpts{
+		hash_config: .with_no_hash
+	}
+	valid0_1 := pbkey.verify(sig0, msg, opt0)!
+	assert valid0_1 == true
 
-	// Second case: sign and verify with sha256.sum direclty
+	// 2nd case: sign and verify with sha256.sum direclty
 	dgs1 := sha256.sum256(msg)
 	sig1 := sign_without_prehash(pvkey.key, dgs1)!
 	valid1 := verify_without_prehash(pbkey.key, sig1, dgs1)!
-	dump(valid1 == true)
+	assert valid1 == true
 	// lets compares with pbkey.sign with no hash
 	valid1_0 := pbkey.verify(sig1, dgs1, hash_config: .with_no_hash)!
-	dump(valid1_0 == true)
+	assert valid1_0 == true
 	// lets compares signed_default with pbkey.sign default hash
 	valid1_1 := pbkey.verify(signed_default, msg)!
-	dump(valid1_1 == true)
+	assert valid1_1 == true
 	// lets compares sig1 with pbkey.sign default hash
 	valid1_2 := pbkey.verify(sig1, msg)!
-	dump(valid1_2 == true)
+	assert valid1_2 == true
 
 	// Third case: sign and verify with sha256.Digest
 	mut d := sha256.new()
@@ -77,25 +81,28 @@ fn test_prime256v1_curve_sign_verify_custom_hash() ! {
 	dgs2 := d.sum([]u8{})
 	sig2 := sign_without_prehash(pvkey.key, dgs2)!
 	valid2 := verify_without_prehash(pbkey.key, sig2, dgs2)!
-	dump(valid2 == true)
+	assert valid2 == true
+
 	valid2_0 := pbkey.verify(sig2, dgs2, hash_config: .with_no_hash)!
-	dump(valid2_0 == true)
+	assert valid2_0 == true
 	valid2_1 := pbkey.verify(sig2, msg)!
-	dump(valid2_1 == true)
+	assert valid2_1 == true
 
-	// Fourth case: with default hash
+	// 4th case: with default hash
 	valid3 := pbkey.verify(signed_default, msg)!
-	dump(valid3 == true)
+	assert valid3 == true
 
-	// Fiveth case: with custom hash, with sha256.Digest
-	// TODO: need to be fixed
+	// 5th case: with custom hash, with sha1.Digest
+	signed_with_sha1 := hex.decode('3046022100e180b8cc451917fb73eecdb05ef4682f2d2a98e33189b8b11cab1f06b2c497fe022100b65c2a5979da9bca18a0f045f98297f6b423baad9ff07adf3ec326117b98675d')!
 	opt := SignerOpts{
-		hash_config: .with_custom_hash
+		hash_config:        .with_custom_hash
+		allow_smaller_size: true
+		custom_hash:        sha1.new()
 	}
+
 	sig4 := pvkey.sign(msg, opt)!
-	dump(sig4.hex())
-	valid4 := pbkey.verify(signed_default, msg, opt)!
-	dump(valid4 == true)
+	valid4 := pbkey.verify(sig4, msg, opt)!
+	assert valid4 == true
 
 	pvkey.free()
 	pbkey.free()

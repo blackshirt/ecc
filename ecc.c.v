@@ -23,6 +23,7 @@ module xecc
 @[typedef]
 struct C.EVP_PKEY {}
 
+fn C.EVP_PKEY_size(key &C.EVP_PKEY) int
 fn C.EVP_PKEY_new() &C.EVP_PKEY
 fn C.EVP_PKEY_free(key &C.EVP_PKEY)
 fn C.EVP_PKEY_dup(key &C.EVP_PKEY) &C.EVP_PKEY
@@ -65,6 +66,7 @@ fn C.EVP_PKEY_set_octet_string_param(pkey &C.EVP_PKEY, key_name &u8, buf &u8, bs
 fn C.EVP_PKEY_fromdata_init(ctx &C.EVP_PKEY_CTX) int
 fn C.EVP_PKEY_fromdata(ctx &C.EVP_PKEY_CTX, ppkey &&C.EVP_PKEY, selection int, params &C.OSSL_PARAM) int
 fn C.EVP_PKEY_get1_encoded_public_key(key &C.EVP_PKEY, ppub &&u8) int
+fn C.EVP_PKEY_CTX_set_signature_md(ctx &C.EVP_PKEY_CTX, md &C.EVP_MD) int
 
 fn C.i2d_PUBKEY_bio(bo &C.BIO, pkey &C.EVP_PKEY) int
 fn C.d2i_PUBKEY_bio(bo &C.BIO, key &&C.EVP_PKEY) &C.EVP_PKEY

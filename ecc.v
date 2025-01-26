@@ -66,7 +66,7 @@ pub struct SignerOpts {
 pub mut:
 	hash_config        HashConfig = .with_recommended_hash
 	allow_smaller_size bool
-	custom_hash        &hash.Hash = sha256.new()
+	custom_hash        hash.Hash = *sha256.new()
 }
 
 // PrivateKey represents ECDSA curve private key.
@@ -132,62 +132,66 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 	if msg.len == 0 {
 		return error('Null-length message was not allowed')
 	}
-	// signing the message without pre-hashing step
-	if opt.hash_config == .with_no_hash {
-		return sign_without_prehash(pv.key, msg)
-	}
-	// signing the message with provided custom hash
-	if opt.hash_config == .with_custom_hash {
-		mut cfg := opt
-		bits_size := C.EVP_PKEY_get_bits(pv.key)
-		if bits_size <= 0 {
-			return error(' bits_size wasnt availables.')
+	match opt.hash_config {
+		.with_no_hash {
+			// signing the message without pre-hashing step
+			return sign_without_prehash(pv.key, msg)
 		}
-		key_size := (bits_size + 7) / 8
-		if cfg.custom_hash.size() < key_size {
-			if !cfg.allow_smaller_size {
-				return error('Hash into smaller size than current key size was not allowed')
+		.with_recommended_hash {
+			// Otherwise, use the default hashing based on the key size.
+			ctx := C.EVP_MD_CTX_new()
+			md := default_digest(pv.key)!
+			init := C.EVP_DigestSignInit(ctx, 0, md, 0, pv.key)
+			if init != 1 {
+				C.EVP_MD_CTX_free(ctx)
+				C.EVP_MD_free(md)
+				return error('EVP_DigestSignInit failed')
 			}
+			upd := C.EVP_DigestSignUpdate(ctx, msg.data, msg.len)
+			if upd != 1 {
+				C.EVP_MD_CTX_free(ctx)
+				C.EVP_MD_free(md)
+				return error('EVP_DigestSignUpdate failed')
+			}
+			siglen := usize(0)
+			f := C.EVP_DigestSignFinal(ctx, 0, &siglen)
+			assert f != 0
+			sig := []u8{len: int(siglen)}
+			fin2 := C.EVP_DigestSignFinal(ctx, sig.data, &siglen)
+			if fin2 != 1 {
+				C.EVP_MD_CTX_free(ctx)
+				C.EVP_MD_free(md)
+				return error('EVP_DigestSignFinal 2 failed')
+			}
+
+			signed := sig[..int(siglen)].clone()
+			// cleans up
+			unsafe { sig.free() }
+			C.EVP_MD_CTX_free(ctx)
+			C.EVP_MD_free(md)
+
+			return signed
 		}
-		_ := cfg.custom_hash.write(msg)!
-		msg_digest := cfg.custom_hash.sum(msg)
-		out := sign_without_prehash(pv.key, msg_digest)!
+		.with_custom_hash {
+			// signing the message with provided custom hash
+			mut cfg := opt
+			bits_size := C.EVP_PKEY_get_bits(pv.key)
+			if bits_size <= 0 {
+				return error(' bits_size wasnt availables.')
+			}
+			key_size := (bits_size + 7) / 8
+			if cfg.custom_hash.size() < key_size {
+				if !cfg.allow_smaller_size {
+					return error('Hash into smaller size than current key size was not allowed')
+				}
+			}
+			_ := cfg.custom_hash.write(msg)!
+			msg_digest := cfg.custom_hash.sum([]u8{})
+			out := sign_without_prehash(pv.key, msg_digest)!
 
-		return out
+			return out
+		}
 	}
-	// Otherwise, use the default hashing based on the key size.
-	ctx := C.EVP_MD_CTX_new()
-	tipe := default_digest(pv.key)!
-	init := C.EVP_DigestSignInit(ctx, 0, tipe, 0, pv.key)
-	if init != 1 {
-		C.EVP_MD_CTX_free(ctx)
-		C.EVP_MD_free(tipe)
-		return error('EVP_DigestSignInit failed')
-	}
-	upd := C.EVP_DigestSignUpdate(ctx, msg.data, msg.len)
-	if upd != 1 {
-		C.EVP_MD_CTX_free(ctx)
-		C.EVP_MD_free(tipe)
-		return error('EVP_DigestSignUpdate failed')
-	}
-	siglen := usize(0)
-	f := C.EVP_DigestSignFinal(ctx, 0, &siglen)
-	assert f != 0
-	sig := []u8{len: int(siglen)}
-	fin2 := C.EVP_DigestSignFinal(ctx, sig.data, &siglen)
-	if fin2 != 1 {
-		C.EVP_MD_CTX_free(ctx)
-		C.EVP_MD_free(tipe)
-		return error('EVP_DigestSignFinal 2 failed')
-	}
-
-	signed := sig[..int(siglen)].clone()
-	// cleans up
-	unsafe { sig.free() }
-	C.EVP_MD_CTX_free(ctx)
-	C.EVP_MD_free(tipe)
-
-	return signed
 }
 
 // PublicKey
@@ -209,52 +213,56 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 	if msg.len == 0 {
 		return error('Null-length message was not allowed')
 	}
-	if opt.hash_config == .with_no_hash {
-		return verify_without_prehash(pb.key, signature, msg)
-	}
-	if opt.hash_config == .with_custom_hash {
-		mut cfg := opt
-		bits_size := C.EVP_PKEY_get_bits(pb.key)
-		if bits_size <= 0 {
-			return error(' bits_size was invalid')
+	match opt.hash_config {
+		.with_no_hash {
+			return verify_without_prehash(pb.key, signature, msg)
 		}
-		key_size := (bits_size + 7) / 8
-		if cfg.custom_hash.size() < key_size {
-			if !cfg.allow_smaller_size {
-				return error('Hash into smaller size than current key size was not allowed')
+		.with_recommended_hash {
+			ctx := C.EVP_MD_CTX_new()
+			md := default_digest(pb.key)!
+			init := C.EVP_DigestVerifyInit(ctx, 0, md, 0, pb.key)
+			if init != 1 {
+				C.EVP_MD_CTX_free(ctx)
+				C.EVP_MD_free(md)
+				return error('EVP_DigestVerifyInit failed')
 			}
+			upd := C.EVP_DigestVerifyUpdate(ctx, msg.data, msg.len)
+			if upd != 1 {
+				C.EVP_MD_CTX_free(ctx)
+				C.EVP_MD_free(md)
+				return error('EVP_DigestVerifyUpdate failed')
+			}
+			fin := C.EVP_DigestVerifyFinal(ctx, signature.data, signature.len)
+			if fin != 1 {
+				C.EVP_MD_CTX_free(ctx)
+				C.EVP_MD_free(md)
+				return error('EVP_DigestVerifyFinal failed')
+			}
+			C.EVP_MD_CTX_free(ctx)
+			C.EVP_MD_free(md)
+
+			return fin == 1
 		}
-		// Its equivalent for sha256.sum256(msg)
-		_ := cfg.custom_hash.write(msg)!
-		msg_digest := cfg.custom_hash.sum([]u8{})
-		valid := verify_without_prehash(pb.key, signature, msg_digest)!
+		.with_custom_hash {
+			mut cfg := opt
+			bits_size := C.EVP_PKEY_get_bits(pb.key)
+			if bits_size <= 0 {
+				return error(' bits_size was invalid')
+			}
+			key_size := (bits_size + 7) / 8
+			if cfg.custom_hash.size() < key_size {
+				if !cfg.allow_smaller_size {
+					return error('Hash into smaller size than current key size was not allowed')
+				}
+			}
+			// TODO: why its fails when we do custom_hash.write(msg) before custom_hash.sum
+			// _ := cfg.custom_hash.write(msg)!
+			msg_digest := cfg.custom_hash.sum([]u8{})
+			valid := verify_without_prehash(pb.key, signature, msg_digest)!
 
-		return valid
+			return valid
+		}
 	}
-	ctx := C.EVP_MD_CTX_new()
-	tipe := default_digest(pb.key)!
-	init := C.EVP_DigestVerifyInit(ctx, 0, tipe, 0, pb.key)
-	if init != 1 {
-		C.EVP_MD_CTX_free(ctx)
-		C.EVP_MD_free(tipe)
-		return error('EVP_DigestVerifyInit failed')
-	}
-	upd := C.EVP_DigestVerifyUpdate(ctx, msg.data, msg.len)
-	if upd != 1 {
-		C.EVP_MD_CTX_free(ctx)
-		C.EVP_MD_free(tipe)
-		return error('EVP_DigestVerifyUpdate failed')
-	}
-	fin := C.EVP_DigestVerifyFinal(ctx, signature.data, signature.len)
-	if fin != 1 {
-		C.EVP_MD_CTX_free(ctx)
-		C.EVP_MD_free(tipe)
-		return error('EVP_DigestVerifyFinal failed')
-	}
-	C.EVP_MD_CTX_free(ctx)
-	C.EVP_MD_free(tipe)
-
-	return fin == 1
 }
 
 // enum of supported curve(s)

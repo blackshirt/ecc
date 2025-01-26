@@ -61,7 +61,9 @@ fn test_key_signing_n_verifying_with_custom_hash() ! {
 		hash_config: .with_custom_hash
 		custom_hash: sha512.new()
 	}
-	digest_with_custom_hash := opt.custom_hash.sum(msg)
+	// equal of sha512.sum512(msg)
+	_ := opt.custom_hash.write(msg)!
+	digest_with_custom_hash := opt.custom_hash.sum([]u8{})
 	signature_prehashed := sign_without_prehash(pkey.key, digest_with_custom_hash)!
 	assert verify_without_prehash(pbkey.key, signature_prehashed, digest_with_custom_hash)! == true
 	assert pbkey.verify(signature_prehashed, msg, opt)! == true
