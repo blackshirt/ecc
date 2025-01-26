@@ -147,7 +147,7 @@ pub fn (pv PrivateKey) bytes() ![]u8 {
 
 // bytes gets bytes of encoded public key bytes
 pub fn (pb PublicKey) bytes() ![]u8 {
-	size := usize(C.EVP_PKEY_get_size(pb.key))
+	size := usize(C.EVP_PKEY_size(pb.key))
 	mut buf := []u8{len: int(size)}
 	mut g := C.EVP_PKEY_get_octet_string_param(pb.key, voidptr('encoded-pub-key'.str),
 		buf.data, buf.len, &size)

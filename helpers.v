@@ -41,21 +41,23 @@ fn sign_without_prehash(key &C.EVP_PKEY, msg []u8) ![]u8 {
 		C.EVP_PKEY_CTX_free(ctx)
 		return error('fails on EVP_PKEY_sign_init')
 	}
-	// Should we set MD on the ctx ? The doc example give this to be set.
-	// EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256())
+	// TODO: Should we set MD on the ctx ? The doc example give this to be set.
+	// set := C.EVP_PKEY_CTX_set_signature_md(ctx, C.EVP_sha256())
+	// assert set > 0
 
 	// siglen to store the size of the signature
 	// when EVP_PKEY_sign called with NULL sig, siglen will tell maximum size
 	// of signature.
 	siglen := usize(0)
 	st := C.EVP_PKEY_sign(ctx, 0, &siglen, msg.data, msg.len)
-	if st != 1 {
+	if st <= 0 {
 		C.EVP_PKEY_CTX_free(ctx)
 		return error('Get null buffer length on EVP_PKEY_sign')
 	}
 	sig := []u8{len: int(siglen)}
 	do := C.EVP_PKEY_sign(ctx, sig.data, &siglen, msg.data, msg.len)
-	if do != 1 {
+
+	if do <= 0 {
 		C.EVP_PKEY_CTX_free(ctx)
 		return error('EVP_PKEY_sign fails to sign message')
 	}
@@ -81,10 +83,12 @@ fn verify_without_prehash(key &C.EVP_PKEY, sig []u8, msg []u8) !bool {
 		C.EVP_PKEY_CTX_free(ctx)
 		return error('fails on EVP_PKEY_verify_init')
 	}
-	// should we places MD context on there ?
+	// TODO:
+	// Its the same issues with sign. should we places MD context on there ?
 	// EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) on
-	// mdr := C.EVP_PKEY_CTX_set_signature_md(ctx, 0)
+	// mdr := C.EVP_PKEY_CTX_set_signature_md(ctx, C.EVP_sha256())
 	// assert mdr > 0
+
 	res := C.EVP_PKEY_verify(ctx, sig.data, sig.len, msg.data, msg.len)
 	if res <= 0 {
 		C.EVP_PKEY_CTX_free(ctx)
