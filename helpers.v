@@ -30,9 +30,6 @@ fn default_digest(key &C.EVP_PKEY) !&C.EVP_MD {
 // sign the message with the key without pre-hashing, left the message as is.
 // You can treat if the msg was also digest output from other process.
 fn sign_without_prehash(key &C.EVP_PKEY, msg []u8) ![]u8 {
-	if key == unsafe { nil } {
-		return error('nil key')
-	}
 	ctx := C.EVP_PKEY_CTX_new(key, 0)
 	if ctx == 0 {
 		C.EVP_PKEY_CTX_free(ctx)

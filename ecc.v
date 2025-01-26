@@ -149,6 +149,7 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 				return error('Hash into smaller size than current key size was not allowed')
 			}
 		}
+		_ := cfg.custom_hash.write(msg)!
 		msg_digest := cfg.custom_hash.sum(msg)
 		out := sign_without_prehash(pv.key, msg_digest)!
 
@@ -223,7 +224,9 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 				return error('Hash into smaller size than current key size was not allowed')
 			}
 		}
-		msg_digest := cfg.custom_hash.sum(msg)
+		// Its equivalent for sha256.sum256(msg)
+		_ := cfg.custom_hash.write(msg)!
+		msg_digest := cfg.custom_hash.sum([]u8{})
 		valid := verify_without_prehash(pb.key, signature, msg_digest)!
 
 		return valid
