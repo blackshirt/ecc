@@ -120,6 +120,7 @@ fn key_description(key &C.EVP_PKEY) !string {
 }
 
 const default_groupname_bufsize = 25 // short name commonly only take 10-15 length
+
 // key_group_name gets the underlying group of the key as a string.
 fn key_group_name(key &C.EVP_PKEY) !string {
 	gname := []u8{len: default_groupname_bufsize}
@@ -164,11 +165,11 @@ fn ec_point_mult(group &C.EC_GROUP, bn &C.BIGNUM) !&C.EC_POINT {
 	return point
 }
 
-const default_pointconv_bufsize = 160 // 2 * 64 + 1 + extra
+const default_point_bufsize = 160 // 2 * 64 + 1 + extra
 
 fn point_2_buf(group &C.EC_GROUP, point &C.EC_POINT, fmt int) ![]u8 {
 	ctx := C.BN_CTX_new()
-	buf := []u8{len: default_pointconv_bufsize}
+	buf := []u8{len: default_point_bufsize}
 	n := C.EC_POINT_point2buf(group, point, fmt, voidptr(&buf.data), ctx)
 	if n <= 0 {
 		C.BN_CTX_free(ctx)

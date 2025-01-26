@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="x-ua-compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>xecc | vdoc</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+		<link rel="manifest" href="site.webmanifest" />
+		<link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5" />
+		<meta name="msapplication-TileColor" content="#da532c" />
+		<meta name="theme-color" content="#ffffff" />
+		<link rel="stylesheet" href="doc.css" />
+		<link rel="stylesheet" href="normalize.css" />
+		<script src="dark-mode.js"></script>
+	</head>
+
+	<body>
+		<div><a id="skip-to-content-link" href="#main-content">Skip to content</a></div>
+		<div id="page">
+			<header class="doc-nav hidden">
+				<div class="heading-container">
+					<div class="heading">
+						<div class="info">
+							<div class="module">xecc</div>
+							<div class="toggle-version-container">
+								<span> 801600c</span>
+								<div
+									id="dark-mode-toggle"
+									role="switch"
+									aria-checked="false"
+									aria-label="Toggle dark mode"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="light-icon" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" class="dark-icon" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24"><g><rect fill="none" height="24" width="24"/></g><g><g><g><path d="M11.1,12.08C8.77,7.57,10.6,3.6,11.63,2.01C6.27,2.2,1.98,6.59,1.98,12c0,0.14,0.02,0.28,0.02,0.42 C2.62,12.15,3.29,12,4,12c1.66,0,3.18,0.83,4.1,2.15C9.77,14.63,11,16.17,11,18c0,1.52-0.87,2.83-2.12,3.51 c0.98,0.32,2.03,0.5,3.11,0.5c3.5,0,6.58-1.8,8.37-4.52C18,17.72,13.38,16.52,11.1,12.08z"/></g><path d="M7,16l-0.18,0C6.4,14.84,5.3,14,4,14c-1.66,0-3,1.34-3,3s1.34,3,3,3c0.62,0,2.49,0,3,0c1.1,0,2-0.9,2-2 C9,16.9,8.1,16,7,16z"/></g></g></svg>
+
+								</div>
+							</div>
+							<svg xmlns="http://www.w3.org/2000/svg" id="toggle-menu" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+
+						</div>
+						<div id="search">
+							<input type="text" placeholder="Search... (beta)" autocomplete="off" />
+						</div>
+					</div>
+				</div>
+				<nav class="search hidden"></nav>
+				<nav class="content hidden">
+					<ul>
+						<li class="open active">
+<div class="menu-row"><a href="./xecc.html">xecc</a></div>
+</li>
+
+					</ul>
+				</nav>
+			</header>
+			<div class="doc-scrollview" tabindex="-1" id="main-content">
+				<div class="doc-container">
+					<div class="doc-content">
+								<section id="readme_xecc" class="doc-node">
+			<div class="title"><h1> xecc <a href="#readme_xecc">#</a></h1></div>
+<h1>ecc</h1><p>The <code>v</code> ecdsa module based on standard <code>crypto.ecdsa</code> module, but, its rewritten to use non-deprecated API on openssl 3.0.</p>
+
+</section>
+
+		<section id="PrivateKey.from_bytes" class="doc-node">
+			<div class="title"><h2>fn PrivateKey.from_bytes <a href="#PrivateKey.from_bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> PrivateKey<span class="token punctuation">.</span><span class="token function">from_bytes</span><span class="token punctuation">(</span>bytes <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> opt CurveOptions<span class="token punctuation">)</span> <span class="token operator">!</span>PrivateKey</code></pre>
+<p>from_bytes creates PrivateKey from provided bytes and options. The bytes length should match with underlying curve key size intended to be created in options.</p>
+
+</section>
+
+		<section id="PrivateKey.from_string" class="doc-node">
+			<div class="title"><h2>fn PrivateKey.from_string <a href="#PrivateKey.from_string">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> PrivateKey<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>PrivateKey</code></pre>
+<p>PrivateKey.from_string loads a PrivateKey from valid PEM-formatted string in s.</p>
+
+</section>
+
+		<section id="PrivateKey.new" class="doc-node">
+			<div class="title"><h2>fn PrivateKey.new <a href="#PrivateKey.new">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> PrivateKey<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span>opt CurveOptions<span class="token punctuation">)</span> <span class="token operator">!</span>PrivateKey</code></pre>
+<p>PrivateKey.new creates a new PrivateKey. Its default to prime256v1 key. Dont forget to call <code>.free()</code> after finish with your key to prevent memleak.</p>
+
+</section>
+
+		<section id="PublicKey.from_string" class="doc-node">
+			<div class="title"><h2>fn PublicKey.from_string <a href="#PublicKey.from_string">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> PublicKey<span class="token punctuation">.</span><span class="token function">from_string</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">)</span> <span class="token operator">!</span>PublicKey</code></pre>
+<p>PublicKey.from_string loads a PublicKey from valid PEM-formatted string in s.</p>
+
+</section>
+
+		<section id="HashConfig" class="doc-node">
+			<div class="title"><h2>enum HashConfig <a href="#HashConfig">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">enum</span> <span class="token symbol">HashConfig</span> <span class="token punctuation">{</span>
+	with_recommended_hash
+	with_no_hash
+	with_custom_hash
+<span class="token punctuation">}</span></code></pre>
+<p>Config of hashing way in signing (verifying) process. See <code>SignerOpts</code> options for more detail.</p>
+
+</section>
+
+		<section id="Nid" class="doc-node">
+			<div class="title"><h2>enum Nid <a href="#Nid">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">enum</span> <span class="token symbol">Nid</span> <span class="token punctuation">{</span>
+	prime256v1
+	secp384r1
+	secp521r1
+	secp256k1
+<span class="token punctuation">}</span></code></pre>
+<p>enum of supported curve(s)</p>
+
+</section>
+
+		<section id="C.BIO" class="doc-node">
+			<div class="title"><h2>struct C.BIO <a href="#C.BIO">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[typedef]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> C<span class="token punctuation">.</span><span class="token symbol">BIO</span> <span class="token punctuation">{</span><span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="CurveOptions" class="doc-node">
+			<div class="title"><h2>struct CurveOptions <a href="#CurveOptions">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[params]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">CurveOptions</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span> <span class="token keyword">mut</span><span class="token punctuation">:</span>
+	<span class="token comment">// default to NIST P-256 curve</span>
+	nid Nid <span class="token operator">=</span> <span class="token punctuation">.</span>prime256v1
+<span class="token punctuation">}</span></code></pre>
+<p>CurveOptions was an options for driving of the key creation.</p>
+
+</section>
+
+		<section id="PrivateKey" class="doc-node">
+			<div class="title"><h2>struct PrivateKey <a href="#PrivateKey">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">PrivateKey</span> <span class="token punctuation">{</span>
+	key <span class="token operator">&</span>C<span class="token punctuation">.</span>EVP_PKEY
+<span class="token punctuation">}</span></code></pre>
+<p>PrivateKey represents ECDSA curve private key.</p>
+
+</section>
+
+		<section id="PrivateKey.bytes" class="doc-node">
+			<div class="title"><h2>fn (PrivateKey) bytes <a href="#PrivateKey.bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pv PrivateKey<span class="token punctuation">)</span> <span class="token function">bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+<p>bytes gets underlying private key bytes</p>
+
+</section>
+
+		<section id="PrivateKey.dump_key" class="doc-node">
+			<div class="title"><h2>fn (PrivateKey) dump_key <a href="#PrivateKey.dump_key">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pv PrivateKey<span class="token punctuation">)</span> <span class="token function">dump_key</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">string</span></code></pre>
+<p>dump_key represents PrivateKey in human readable string.</p>
+
+</section>
+
+		<section id="PrivateKey.free" class="doc-node">
+			<div class="title"><h2>fn (PrivateKey) free <a href="#PrivateKey.free">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pv <span class="token operator">&</span>PrivateKey<span class="token punctuation">)</span> <span class="token function">free</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+<p>free releases memory occupied by this key.</p>
+
+</section>
+
+		<section id="PrivateKey.public_key" class="doc-node">
+			<div class="title"><h2>fn (PrivateKey) public_key <a href="#PrivateKey.public_key">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pv PrivateKey<span class="token punctuation">)</span> <span class="token function">public_key</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span>PublicKey</code></pre>
+<p>public_key gets the public key from this PrivateKey. Its returns the new public key witth stripped private key bits. Dont forget to call <code>.free()</code> on this public key if you've finished with them.</p>
+
+</section>
+
+		<section id="PrivateKey.sign" class="doc-node">
+			<div class="title"><h2>fn (PrivateKey) sign <a href="#PrivateKey.sign">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pv PrivateKey<span class="token punctuation">)</span> <span class="token function">sign</span><span class="token punctuation">(</span>msg <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> opt SignerOpts<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+<p>sign signs the the message with the provided key and return the signature or error otherwise. If you dont provide the options, by default, it will precompute the digest (hash) of message before signing based on the size of underlying key. See the <code>SignerOpts</code> for more detail of options.</p>
+
+</section>
+
+		<section id="PublicKey" class="doc-node">
+			<div class="title"><h2>struct PublicKey <a href="#PublicKey">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">PublicKey</span> <span class="token punctuation">{</span>
+	key <span class="token operator">&</span>C<span class="token punctuation">.</span>EVP_PKEY
+<span class="token punctuation">}</span></code></pre>
+<p>PublicKey</p>
+
+</section>
+
+		<section id="PublicKey.bytes" class="doc-node">
+			<div class="title"><h2>fn (PublicKey) bytes <a href="#PublicKey.bytes">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pb PublicKey<span class="token punctuation">)</span> <span class="token function">bytes</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span></code></pre>
+<p>bytes gets bytes of encoded public key bytes</p>
+
+</section>
+
+		<section id="PublicKey.dump_key" class="doc-node">
+			<div class="title"><h2>fn (PublicKey) dump_key <a href="#PublicKey.dump_key">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pb PublicKey<span class="token punctuation">)</span> <span class="token function">dump_key</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">string</span></code></pre>
+<p>dump_key represents public key in human readable string.</p>
+
+</section>
+
+		<section id="PublicKey.free" class="doc-node">
+			<div class="title"><h2>fn (PublicKey) free <a href="#PublicKey.free">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pb <span class="token operator">&</span>PublicKey<span class="token punctuation">)</span> <span class="token function">free</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+<p>free releases the memory occupied by this key.</p>
+
+</section>
+
+		<section id="PublicKey.verify" class="doc-node">
+			<div class="title"><h2>fn (PublicKey) verify <a href="#PublicKey.verify">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>pb PublicKey<span class="token punctuation">)</span> <span class="token function">verify</span><span class="token punctuation">(</span>signature <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> msg <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">u8</span><span class="token punctuation">,</span> opt SignerOpts<span class="token punctuation">)</span> <span class="token operator">!</span><span class="token builtin">bool</span></code></pre>
+<p>verify verifies the signature whether this signature were a valid one for the message signed under the key and provided options. Its accepts options in opt to drive verify operation. As a note, verifying signature with options differs from the options used by the signing produces, would produce unmatching value (false). Dont forget to call <code>.free()</code> after you finished your work with the key.</p>
+
+</section>
+
+		<section id="SignerOpts" class="doc-node">
+			<div class="title"><h2>struct SignerOpts <a href="#SignerOpts">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[params]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">SignerOpts</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span> <span class="token keyword">mut</span><span class="token punctuation">:</span>
+	hash_config        HashConfig <span class="token operator">=</span> <span class="token punctuation">.</span>with_recommended_hash
+	allow_smaller_size <span class="token builtin">bool</span>
+	custom_hash        hash<span class="token punctuation">.</span>Hash <span class="token operator">=</span> <span class="token operator">*</span>sha256<span class="token punctuation">.</span><span class="token function">new</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+<p>SignerOpts was configuration options to drive signing and verifying process. Its currently supports three different scheme, in the form of <code>hash_config</code> config:- <code>with_recommended_hash</code>Its a default behaviour. By setting to this value means the signing (or verifying) routine would do precomputing the hash (digest) of the message before signing (or verifying). The default hash algorithm was choosen based on the size of underlying key,- <code>with_no_hash</code>When using this option, the signing (or verifying) routine does not perform any prehashing step to the message, and left message as is. Its also applied to messages that are already in the form of digests, which are produced outside of context.- <code>with_custom_hash</code>By setting <code>hash_config</code> into this value, its allow custom hashing routine through of <code>hash.Hash</code> interface. By default its set to <code>sha256.Digest</code>. If you need the other one, make sure you set <code>custom_hash</code> it into your desired hash. When you choose <code>custom_hash</code> that produces hash smaller size than current key size, by default its not allowed. You should set <code>allow_smaller_size</code> into <code>true</code> explicitly to allow this limit. As a important note, hashing into smaller size was not recommended.</p>
+
+</section>
+
+
+						<div class="footer">Powered by vdoc. Generated on: 26 Jan 2025 16:12:27</div>
+					</div>
+					<div class="doc-toc"><ul><li class="open"><a href="#readme_xecc">README</a></li>
+<li class="open"><a href="#PrivateKey.from_bytes">fn PrivateKey.from_bytes</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#PrivateKey.from_string">fn PrivateKey.from_string</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#PrivateKey.new">fn PrivateKey.new</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#PublicKey.from_string">fn PublicKey.from_string</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#HashConfig">enum HashConfig</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Nid">enum Nid</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#C.BIO">struct C.BIO</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#CurveOptions">struct CurveOptions</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#PrivateKey">struct PrivateKey</a>        <ul>
+<li><a href="#PrivateKey.bytes">fn bytes</a></li>
+<li><a href="#PrivateKey.dump_key">fn dump_key</a></li>
+<li><a href="#PrivateKey.free">fn free</a></li>
+<li><a href="#PrivateKey.public_key">fn public_key</a></li>
+<li><a href="#PrivateKey.sign">fn sign</a></li>
+</ul>
+</li>
+<li class="open"><a href="#PublicKey">struct PublicKey</a>        <ul>
+<li><a href="#PublicKey.bytes">fn bytes</a></li>
+<li><a href="#PublicKey.dump_key">fn dump_key</a></li>
+<li><a href="#PublicKey.free">fn free</a></li>
+<li><a href="#PublicKey.verify">fn verify</a></li>
+</ul>
+</li>
+<li class="open"><a href="#SignerOpts">struct SignerOpts</a>        <ul>
+</ul>
+</li>
+</ul></div>
+				</div>
+			</div>
+		</div>
+		<script src="doc.js"></script>
+		<script async src="search_index.js"></script>
+	</body>
+</html>

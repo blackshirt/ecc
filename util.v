@@ -71,12 +71,10 @@ pub fn PublicKey.from_string(s string) !PublicKey {
 		return error('Null length string was not allowed')
 	}
 	bo := C.BIO_new(C.BIO_s_mem())
-	if bo == 0 {
-		return error('Failed to create BIO_new')
-	}
 	n := C.BIO_write(bo, s.str, s.len)
-	if n <= 0 {
-		return error('Failed to BIO_write')
+	if bo == 0 || n <= 0 {
+		C.BIO_free_all(bo)
+		return error('BIO Failed')
 	}
 	evpkey := C.PEM_read_bio_PUBKEY(bo, 0, 0, 0)
 	if evpkey == 0 {

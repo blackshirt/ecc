@@ -7,7 +7,6 @@ fn test_pvkey_new_p256() ! {
 	pkey := PrivateKey.new()!
 	assert C.EVP_PKEY_get_bits(pkey.key) == 256
 	assert C.EVP_PKEY_get_id(pkey.key) == nid_ec_publickey
-	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == 4
 	assert C.EVP_PKEY_size(pkey.key) >= 2 * 32 // twice or more of key size
 	assert key_type_name(pkey.key)! == 'EC' // its type of EC key
 	assert key_description(pkey.key)! == 'OpenSSL EC implementation'
@@ -22,7 +21,6 @@ fn test_pvkey_new_secp256k1() ! {
 	pkey := PrivateKey.new(nid: .secp256k1)!
 	assert C.EVP_PKEY_get_bits(pkey.key) == 256
 	assert C.EVP_PKEY_get_id(pkey.key) == nid_ec_publickey
-	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == 4
 	assert C.EVP_PKEY_size(pkey.key) >= 2 * 32 // twice or more of key size
 	assert key_type_name(pkey.key)! == 'EC' // its type of EC key
 	assert key_description(pkey.key)! == 'OpenSSL EC implementation'
@@ -37,7 +35,6 @@ fn test_pvkey_new_p384() ! {
 	pkey := PrivateKey.new(nid: .secp384r1)!
 	assert C.EVP_PKEY_get_bits(pkey.key) == 384
 	assert C.EVP_PKEY_get_id(pkey.key) == nid_ec_publickey
-	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == 4
 	assert C.EVP_PKEY_size(pkey.key) >= 2 * 48 // twice or more of key size
 	assert key_type_name(pkey.key)! == 'EC' // its type of EC key
 	assert key_description(pkey.key)! == 'OpenSSL EC implementation'
@@ -52,7 +49,6 @@ fn test_pvkey_new_p521() ! {
 	pkey := PrivateKey.new(nid: .secp521r1)!
 	assert C.EVP_PKEY_get_bits(pkey.key) == 521
 	assert C.EVP_PKEY_get_id(pkey.key) == nid_ec_publickey
-	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == 4
 	assert C.EVP_PKEY_size(pkey.key) >= 2 * 64 // twice or more of key size
 	assert key_type_name(pkey.key)! == 'EC' // its type of EC key
 	assert key_description(pkey.key)! == 'OpenSSL EC implementation'

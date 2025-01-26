@@ -1,10 +1,10 @@
 // Copyright @blackshirt 2025
 //
-import x.crypto.xecc
+import x.crypto.ecc
 
 fn main() {
 	// creates a new default key
-	pvkey := xecc.PrivateKey.new()!
+	pvkey := ecc.PrivateKey.new()!
 	// Message to be signed
 	msg := 'Example of the new ecdsa module'.bytes()
 	// create a signature for the message based on the generated key.

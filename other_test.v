@@ -103,6 +103,8 @@ fn test_prime256v1_curve_sign_verify_custom_hash() ! {
 	sig4 := pvkey.sign(msg, opt)!
 	valid4 := pbkey.verify(sig4, msg, opt)!
 	assert valid4 == true
+	valid5 := pbkey.verify(signed_with_sha1, msg, opt)!
+	assert valid5 == true
 
 	pvkey.free()
 	pbkey.free()

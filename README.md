@@ -1,2 +1,3 @@
 # ecc
-rewriten of v ecdsa module to use non-deprecated on openssl 3.0
+The `v` ecdsa module based on standard `crypto.ecdsa` module,
+but, its rewritten to use non-deprecated API on openssl 3.0.
