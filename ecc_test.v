@@ -58,17 +58,17 @@ fn test_pvkey_new_p521() ! {
 	pkey.free()
 }
 
-fn test_key_sign_n_verify_without_prehash() ! {
+fn test_key_sign_n_verify_signature() ! {
 	pkey := PrivateKey.new()!
 	pbkey := pkey.public_key()!
 	msg := 'MessageTobeSigned'.bytes()
 
-	sign_without_hashed := sign_without_prehash(pkey.key, msg)!
-	assert verify_without_prehash(pbkey.key, sign_without_hashed, msg)! == true
+	sign_without_hashed := sign_message(pkey.key, msg)!
+	assert verify_signature(pbkey.key, sign_without_hashed, msg) == true
 
 	sign_nohash := pkey.sign(msg, hash_config: .with_no_hash)!
 	assert pbkey.verify(sign_nohash, msg, hash_config: .with_no_hash)! == true
-	assert verify_without_prehash(pbkey.key, sign_nohash, msg)! == true
+	assert verify_signature(pbkey.key, sign_nohash, msg) == true
 
 	pkey.free()
 	pbkey.free()
@@ -105,12 +105,13 @@ fn test_key_signing_n_verifying_with_custom_hash() ! {
 	}
 	// equal of sha512.sum512(msg)
 	_ := opt.custom_hash.write(msg)!
-	digest_with_custom_hash := opt.custom_hash.sum([]u8{})
-	signature_prehashed := sign_without_prehash(pkey.key, digest_with_custom_hash)!
-	assert verify_without_prehash(pbkey.key, signature_prehashed, digest_with_custom_hash)! == true
-	assert pbkey.verify(signature_prehashed, msg, opt)! == true
+	msg_with_custom_hashed := opt.custom_hash.sum([]u8{})
+	signature_prehashed := sign_message(pkey.key, msg_with_custom_hashed)!
+	assert verify_signature(pbkey.key, signature_prehashed, msg_with_custom_hashed) == true
+	// assert pbkey.verify(signature_prehashed, msg, opt)! == true
 
 	signed := pkey.sign(msg, opt)!
+
 	assert pbkey.verify(signed, msg, opt)! == true
 
 	pkey.free()

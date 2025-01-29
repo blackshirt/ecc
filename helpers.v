@@ -1,5 +1,7 @@
 module xecc
 
+import hash
+
 // Helpers
 //
 // default_digest gets the default algorithm for this key.
@@ -27,35 +29,50 @@ fn default_digest(key &C.EVP_PKEY) !&C.EVP_MD {
 	return error('should not here')
 }
 
+fn sign_msg_with_custom_hash(key &C.EVP_PKEY, msg []u8, mut ch hash.Hash) ![]u8 {
+	n := ch.write(msg)!
+	assert n > 0
+	digest := ch.sum([]u8{})
+
+	return sign_message(key, digest)
+}
+
 // sign the message with the key without pre-hashing, left the message as is.
 // You can treat if the msg was also digest output from other process.
-fn sign_without_prehash(key &C.EVP_PKEY, msg []u8) ![]u8 {
+fn sign_message(key &C.EVP_PKEY, msg []u8) ![]u8 {
 	ctx := C.EVP_PKEY_CTX_new(key, 0)
 	if ctx == 0 {
 		C.EVP_PKEY_CTX_free(ctx)
 		return error('Fails on EVP_PKEY_CTX_new')
 	}
-
 	sin := C.EVP_PKEY_sign_init(ctx)
 	if sin != 1 {
 		C.EVP_PKEY_CTX_free(ctx)
 		return error('fails on EVP_PKEY_sign_init')
 	}
+
 	// TODO: Should we set MD on the ctx ? The doc example give this to be set.
 	// set := C.EVP_PKEY_CTX_set_signature_md(ctx, C.EVP_sha256())
 	// assert set > 0
-
-	// siglen to store the size of the signature
+	// we explicitly using this sha256 digest
+	md := C.EVP_sha256()
+	mdsize := usize(C.EVP_MD_get_size(md))
+	mdbuf := []u8{len: int(mdsize)}
+	mdr := C.EVP_Digest(&msg.data, msg.len, mdbuf.data, &mdsize, md, 0)
+	assert mdr != 0
+	digest := mdbuf[..mdsize].clone()
+	// siglen to store the size of the sigC.EVP_MD_get_size(md)nature
 	// when EVP_PKEY_sign called with NULL sig, siglen will tell maximum size
 	// of signature.
-	siglen := usize(0)
-	st := C.EVP_PKEY_sign(ctx, 0, &siglen, msg.data, msg.len)
+	size := C.EVP_PKEY_size(key)
+	siglen := usize(size)
+	st := C.EVP_PKEY_sign(ctx, 0, &siglen, digest.data, digest.len)
 	if st <= 0 {
 		C.EVP_PKEY_CTX_free(ctx)
 		return error('Get null buffer length on EVP_PKEY_sign')
 	}
 	sig := []u8{len: int(siglen)}
-	do := C.EVP_PKEY_sign(ctx, sig.data, &siglen, msg.data, msg.len)
+	do := C.EVP_PKEY_sign(ctx, sig.data, &siglen, digest.data, digest.len)
 
 	if do <= 0 {
 		C.EVP_PKEY_CTX_free(ctx)
@@ -71,28 +88,42 @@ fn sign_without_prehash(key &C.EVP_PKEY, msg []u8) ![]u8 {
 	return signed
 }
 
-// verify_without_prehash verifies the signature for the message under the provided key.
-fn verify_without_prehash(key &C.EVP_PKEY, sig []u8, msg []u8) !bool {
+fn verify_signature_with_custom_hash(key &C.EVP_PKEY, sig []u8, msg []u8, mut ch hash.Hash) bool {
+	n := ch.write(msg) or { return false }
+	assert n > 0
+	digest := ch.sum([]u8{})
+
+	return verify_signature(key, sig, digest)
+}
+
+// verify_signature verifies the signature for the message under the provided key.
+fn verify_signature(key &C.EVP_PKEY, sig []u8, msg []u8) bool {
 	ctx := C.EVP_PKEY_CTX_new(key, 0)
 	if ctx == 0 {
 		C.EVP_PKEY_CTX_free(ctx)
-		return error('Fails on EVP_PKEY_CTX_new')
+		return false
 	}
 	vinit := C.EVP_PKEY_verify_init(ctx)
 	if vinit != 1 {
 		C.EVP_PKEY_CTX_free(ctx)
-		return error('fails on EVP_PKEY_verify_init')
+		return false
 	}
 	// TODO:
 	// Its the same issues with sign. should we places MD context on there ?
 	// EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) on
 	// mdr := C.EVP_PKEY_CTX_set_signature_md(ctx, C.EVP_sha256())
 	// assert mdr > 0
+	md := C.EVP_sha256()
+	mdsize := usize(C.EVP_MD_get_size(md))
+	mdbuf := []u8{len: int(mdsize)}
+	mdr := C.EVP_Digest(&msg.data, msg.len, mdbuf.data, &mdsize, md, 0)
+	assert mdr != 0
+	digest := mdbuf[..mdsize].clone()
 
-	res := C.EVP_PKEY_verify(ctx, sig.data, sig.len, msg.data, msg.len)
+	res := C.EVP_PKEY_verify(ctx, sig.data, sig.len, digest.data, digest.len)
 	if res <= 0 {
 		C.EVP_PKEY_CTX_free(ctx)
-		return error('Failed to verify signature')
+		return false
 	}
 	C.EVP_PKEY_CTX_free(ctx)
 	return res == 1

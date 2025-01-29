@@ -135,7 +135,7 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 	match opt.hash_config {
 		.with_no_hash {
 			// signing the message without pre-hashing step
-			return sign_without_prehash(pv.key, msg)
+			return sign_message(pv.key, msg)
 		}
 		.with_recommended_hash {
 			// Otherwise, use the default hashing based on the key size.
@@ -187,7 +187,7 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 			}
 			_ := cfg.custom_hash.write(msg)!
 			msg_digest := cfg.custom_hash.sum([]u8{})
-			out := sign_without_prehash(pv.key, msg_digest)!
+			out := sign_message(pv.key, msg_digest)!
 
 			return out
 		}
@@ -215,7 +215,7 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 	}
 	match opt.hash_config {
 		.with_no_hash {
-			return verify_without_prehash(pb.key, signature, msg)
+			return verify_signature(pb.key, signature, msg)
 		}
 		.with_recommended_hash {
 			ctx := C.EVP_MD_CTX_new()
@@ -256,9 +256,9 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 				}
 			}
 			// TODO: why its fails when we do custom_hash.write(msg) before custom_hash.sum
-			// _ := cfg.custom_hash.write(msg)!
+			//_ := cfg.custom_hash.write(msg)!
 			msg_digest := cfg.custom_hash.sum([]u8{})
-			valid := verify_without_prehash(pb.key, signature, msg_digest)!
+			valid := verify_signature(pb.key, signature, msg_digest)
 
 			return valid
 		}

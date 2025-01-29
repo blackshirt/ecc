@@ -139,7 +139,6 @@ struct C.EC_KEY {}
 @[typedef]
 struct C.EVP_MD {}
 
-fn C.EVP_MD_free(md &C.EVP_MD)
 fn C.EVP_sha256() &C.EVP_MD
 fn C.EVP_sha384() &C.EVP_MD
 fn C.EVP_sha512() &C.EVP_MD
@@ -148,6 +147,8 @@ fn C.EVP_sha3_384() &C.EVP_MD
 fn C.EVP_sha3_512() &C.EVP_MD
 fn C.EVP_shake128() &C.EVP_MD
 fn C.EVP_shake256() &C.EVP_MD
+fn C.EVP_MD_get_size(md &C.EVP_MD) int // -1 failure
+fn C.EVP_MD_free(md &C.EVP_MD)
 
 @[typedef]
 struct C.EVP_MD_CTX {}
@@ -156,9 +157,12 @@ fn C.EVP_MD_CTX_new() &C.EVP_MD_CTX
 fn C.EVP_MD_CTX_free(ctx &C.EVP_MD_CTX)
 fn C.EVP_MD_CTX_set_pkey_ctx(ctx &C.EVP_MD_CTX, pctx &C.EVP_PKEY_CTX)
 
-// Non pre-hash digest routine
+// single shoot digest signing routine
 fn C.EVP_DigestSign(ctx &C.EVP_MD_CTX, sig &u8, siglen &usize, tbs &u8, tbslen int) int
 fn C.EVP_DigestVerify(ctx &C.EVP_MD_CTX, sig &u8, siglen int, tbs &u8, tbslen int) int
+
+// int EVP_Digest(const void *data, size_t count, unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl);
+fn C.EVP_Digest(data &u8, count int, md &u8, size &usize, tipe &C.EVP_MD, impl voidptr) int
 
 // Recommended hashed signer routine
 fn C.EVP_DigestSignInit(ctx &C.EVP_MD_CTX, pctx &&C.EVP_PKEY_CTX, tipe &C.EVP_MD, e voidptr, pkey &C.EVP_PKEY) int
