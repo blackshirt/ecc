@@ -53,6 +53,8 @@ fn C.EVP_PKEY_get_octet_string_param(pkey &C.EVP_PKEY, key_name &u8, buf &u8, ma
 fn C.EVP_PKEY_set_octet_string_param(pkey &C.EVP_PKEY, key_name &u8, buf &u8, bsize int) int
 fn C.EVP_PKEY_fromdata_init(ctx &C.EVP_PKEY_CTX) int
 fn C.EVP_PKEY_fromdata(ctx &C.EVP_PKEY_CTX, ppkey &&C.EVP_PKEY, selection int, params &C.OSSL_PARAM) int
+fn C.EVP_PKEY_get_default_digest_nid(pkey &C.EVP_PKEY, pnid &int) int
+fn C.EVP_get_digestbynid(nid int) &C.EVP_MD
 
 @[typedef]
 struct C.EVP_PKEY_CTX {}
@@ -162,7 +164,7 @@ fn C.EVP_DigestSign(ctx &C.EVP_MD_CTX, sig &u8, siglen &usize, tbs &u8, tbslen i
 fn C.EVP_DigestVerify(ctx &C.EVP_MD_CTX, sig &u8, siglen int, tbs &u8, tbslen int) int
 
 // int EVP_Digest(const void *data, size_t count, unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl);
-fn C.EVP_Digest(data &u8, count int, md &u8, size &usize, tipe &C.EVP_MD, impl voidptr) int
+fn C.EVP_Digest(data &u8, count int, md &u8, size &u32, tipe &C.EVP_MD, impl voidptr) int
 
 // Recommended hashed signer routine
 fn C.EVP_DigestSignInit(ctx &C.EVP_MD_CTX, pctx &&C.EVP_PKEY_CTX, tipe &C.EVP_MD, e voidptr, pkey &C.EVP_PKEY) int

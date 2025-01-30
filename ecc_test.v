@@ -1,5 +1,6 @@
 module xecc
 
+import crypto.sha1
 import crypto.sha512
 
 fn test_pvkey_new_p256() ! {
@@ -58,20 +59,44 @@ fn test_pvkey_new_p521() ! {
 	pkey.free()
 }
 
-fn test_key_sign_n_verify_signature() ! {
-	pkey := PrivateKey.new()!
-	pbkey := pkey.public_key()!
+fn test_key_sign_verify_with_smaller_custom_hash() ! {
+	pv := PrivateKey.new()!
+	msg_a := 'a'.repeat(300).bytes()
+	opt := SignerOpts{
+		hash_config: .with_recommended_hash
+		custom_hash: sha1.new()
+	}
+
+	signed := pv.sign(msg_a, opt)!
+
+	pb := pv.public_key()!
+	st := pb.verify(signed, msg_a, opt)!
+	assert st == true // should true
+
+	// different msg should not be verified
+	msg_b := 'a'.repeat(392).bytes()
+	ds := pb.verify(signed, msg_b, opt)!
+
+	// should false
+	assert ds == false
+	pv.free()
+	pb.free()
+}
+
+fn test_key_signing_n_verifying_with_bigger_custom_hash() ! {
+	pv := PrivateKey.new()!
+	pb := pv.public_key()!
 	msg := 'MessageTobeSigned'.bytes()
 
-	sign_without_hashed := sign_message(pkey.key, msg)!
-	assert verify_signature(pbkey.key, sign_without_hashed, msg) == true
+	mut opt := SignerOpts{
+		hash_config: .with_custom_hash
+		custom_hash: sha512.new()
+	}
+	signed := pv.sign(msg, opt)!
+	assert pb.verify(signed, msg, opt)! == true
 
-	sign_nohash := pkey.sign(msg, hash_config: .with_no_hash)!
-	assert pbkey.verify(sign_nohash, msg, hash_config: .with_no_hash)! == true
-	assert verify_signature(pbkey.key, sign_nohash, msg) == true
-
-	pkey.free()
-	pbkey.free()
+	pv.free()
+	pb.free()
 }
 
 fn test_key_signing_n_verifying_with_default_hash() ! {
@@ -92,28 +117,4 @@ fn test_key_signing_n_verifying_with_default_hash() ! {
 	pkey2.free()
 	pbkey.free()
 	pbkey2.free()
-}
-
-fn test_key_signing_n_verifying_with_custom_hash() ! {
-	pkey := PrivateKey.new()!
-	pbkey := pkey.public_key()!
-	msg := 'MessageTobeSigned'.bytes()
-
-	mut opt := SignerOpts{
-		hash_config: .with_custom_hash
-		custom_hash: sha512.new()
-	}
-	// equal of sha512.sum512(msg)
-	_ := opt.custom_hash.write(msg)!
-	msg_with_custom_hashed := opt.custom_hash.sum([]u8{})
-	signature_prehashed := sign_message(pkey.key, msg_with_custom_hashed)!
-	assert verify_signature(pbkey.key, signature_prehashed, msg_with_custom_hashed) == true
-	// assert pbkey.verify(signature_prehashed, msg, opt)! == true
-
-	signed := pkey.sign(msg, opt)!
-
-	assert pbkey.verify(signed, msg, opt)! == true
-
-	pkey.free()
-	pbkey.free()
 }

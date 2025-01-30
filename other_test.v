@@ -50,7 +50,7 @@ fn test_prime256v1_curve_sign_verify_custom_hash() ! {
 	signed_default := pvkey.sign(msg)!
 
 	// 1st case: sign and verify without prehash step
-	sig0 := sign_message(pvkey.key, msg)!
+	sig0 := sign_digest(pvkey.key, msg)!
 	valid0 := verify_signature(pbkey.key, sig0, msg)
 	assert valid0 == true
 	// lets compares with pbkey.sign with no hash
@@ -62,7 +62,7 @@ fn test_prime256v1_curve_sign_verify_custom_hash() ! {
 
 	// 2nd case: sign and verify with sha256.sum direclty
 	dgs1 := sha256.sum256(msg)
-	sig1 := sign_message(pvkey.key, dgs1)!
+	sig1 := sign_digest(pvkey.key, dgs1)!
 	valid1 := verify_signature(pbkey.key, sig1, dgs1)
 	assert valid1 == true
 	// lets compares with pbkey.sign with no hash
@@ -79,7 +79,7 @@ fn test_prime256v1_curve_sign_verify_custom_hash() ! {
 	mut d := sha256.new()
 	_ := d.write(msg)!
 	dgs2 := d.sum([]u8{})
-	sig2 := sign_message(pvkey.key, dgs2)!
+	sig2 := sign_digest(pvkey.key, dgs2)!
 	valid2 := verify_signature(pbkey.key, sig2, dgs2)
 	assert valid2 == true
 
