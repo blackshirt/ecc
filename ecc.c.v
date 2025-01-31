@@ -26,14 +26,17 @@ fn C.EVP_PKEY_size(key &C.EVP_PKEY) int
 fn C.EVP_PKEY_new() &C.EVP_PKEY
 fn C.EVP_PKEY_free(key &C.EVP_PKEY)
 fn C.EVP_PKEY_keygen_init(ctx &C.EVP_PKEY_CTX) int // 1 success
-fn C.EVP_EC_gen(curve voidptr) &C.EVP_PKEY
+fn C.EVP_EC_gen(curve &u8) &C.EVP_PKEY
 fn C.EVP_PKEY_set_bn_param(pkey &C.EVP_PKEY, key_name &u8, bn &C.BIGNUM) int
-fn C.EVP_PKEY_verify_init(ctx &C.EVP_PKEY_CTX) int
-fn C.EVP_PKEY_verify(ctx &C.EVP_PKEY_CTX, sig &u8, siglen int, tbs &u8, tbslen int) int
 fn C.EVP_PKEY_eq(a &C.EVP_PKEY, b &C.EVP_PKEY) int
 fn C.EVP_PKEY_check(ctx &C.EVP_PKEY_CTX) int
+
+// non prehash signing (verifying)
 fn C.EVP_PKEY_sign(ctx &C.EVP_PKEY_CTX, sig &u8, siglen &usize, tbs &u8, tbslen int) int
 fn C.EVP_PKEY_sign_init(ctx &C.EVP_PKEY_CTX) int
+fn C.EVP_PKEY_verify_init(ctx &C.EVP_PKEY_CTX) int
+fn C.EVP_PKEY_verify(ctx &C.EVP_PKEY_CTX, sig &u8, siglen int, tbs &u8, tbslen int) int
+
 fn C.EVP_PKEY_get_bits(pkey &C.EVP_PKEY) int
 fn C.EVP_PKEY_get_security_bits(pkey &C.EVP_PKEY) int
 fn C.EVP_PKEY_get0_type_name(key &C.EVP_PKEY) &char

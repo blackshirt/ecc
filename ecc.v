@@ -133,38 +133,40 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 		return error('Null-length message was not allowed')
 	}
 	mut cfg := opt
+	bits_size := C.EVP_PKEY_get_bits(pv.key)
+	if bits_size <= 0 {
+		return error(' bits_size was invalid')
+	}
+	key_size := (bits_size + 7) / 8
 	match cfg.hash_config {
 		.with_no_hash {
-			// signing the message without pre-hashing step
+			// treats msg as digest
+			if msg.len > key_size {
+				return error('Unmatching msg size, use .with_recommended_hash options instead')
+			}
 			return sign_digest(pv.key, msg)
 		}
 		.with_recommended_hash {
 			// Otherwise, use the default hashing based on the key size.
 			ctx := C.EVP_MD_CTX_new()
 			md := default_digest(pv.key)!
+
 			init := C.EVP_DigestSignInit(ctx, 0, md, 0, pv.key)
 			if init != 1 {
 				C.EVP_MD_CTX_free(ctx)
 				C.EVP_MD_free(md)
 				return error('EVP_DigestSignInit failed')
 			}
-			upd := C.EVP_DigestSignUpdate(ctx, msg.data, msg.len)
-			if upd != 1 {
-				C.EVP_MD_CTX_free(ctx)
-				C.EVP_MD_free(md)
-				return error('EVP_DigestSignUpdate failed')
-			}
 			siglen := usize(0)
-			f := C.EVP_DigestSignFinal(ctx, 0, &siglen)
-			assert f != 0
+			mut n := C.EVP_DigestSign(ctx, 0, &siglen, msg.data, msg.len)
+			assert n > 0
 			sig := []u8{len: int(siglen)}
-			fin2 := C.EVP_DigestSignFinal(ctx, sig.data, &siglen)
-			if fin2 != 1 {
+			n = C.EVP_DigestSign(ctx, sig.data, &siglen, msg.data, msg.len)
+			if n <= 0 {
 				C.EVP_MD_CTX_free(ctx)
 				C.EVP_MD_free(md)
-				return error('EVP_DigestSignFinal 2 failed')
+				return error('EVP_DigestSign failed')
 			}
-
 			signed := sig[..int(siglen)].clone()
 			// cleans up
 			unsafe { sig.free() }
@@ -175,20 +177,16 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 		}
 		.with_custom_hash {
 			// signing the message with provided custom hash
-			bits_size := C.EVP_PKEY_get_bits(pv.key)
-			if bits_size <= 0 {
-				return error(' bits_size wasnt availables.')
-			}
-			key_size := (bits_size + 7) / 8
 			if cfg.custom_hash.size() < key_size {
 				if !cfg.allow_smaller_size {
 					return error('Hash into smaller size than current key size was not allowed')
 				}
 			}
+			// we reset the custom hash before write
 			cfg.custom_hash.reset()
 			_ := cfg.custom_hash.write(msg)!
 			msg_digest := cfg.custom_hash.sum([]u8{})
-
+			// TODO: check if msg_digest was biggers than signature size
 			out := sign_digest(pv.key, msg_digest)!
 
 			return out
@@ -216,8 +214,16 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 		return error('Null-length message was not allowed')
 	}
 	mut cfg := opt
-	match opt.hash_config {
+	bits_size := C.EVP_PKEY_get_bits(pb.key)
+	if bits_size <= 0 {
+		return error(' bits_size was invalid')
+	}
+	key_size := (bits_size + 7) / 8
+	match cfg.hash_config {
 		.with_no_hash {
+			if msg.len > key_size {
+				return error('Unmatching msg size, use .with_recommended_hash options instead')
+			}
 			return verify_signature(pb.key, signature, msg)
 		}
 		.with_recommended_hash {
@@ -229,29 +235,14 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 				C.EVP_MD_free(md)
 				return false
 			}
-			upd := C.EVP_DigestVerifyUpdate(ctx, msg.data, msg.len)
-			if upd != 1 {
-				C.EVP_MD_CTX_free(ctx)
-				C.EVP_MD_free(md)
-				return false
-			}
-			fin := C.EVP_DigestVerifyFinal(ctx, signature.data, signature.len)
-			if fin != 1 {
-				C.EVP_MD_CTX_free(ctx)
-				C.EVP_MD_free(md)
-				return false
-			}
+			fin := C.EVP_DigestVerify(ctx, signature.data, signature.len, msg.data, msg.len)
+			// cleans up
 			C.EVP_MD_CTX_free(ctx)
 			C.EVP_MD_free(md)
 
 			return fin == 1
 		}
 		.with_custom_hash {
-			bits_size := C.EVP_PKEY_get_bits(pb.key)
-			if bits_size <= 0 {
-				return error(' bits_size was invalid')
-			}
-			key_size := (bits_size + 7) / 8
 			if cfg.custom_hash.size() < key_size {
 				if !cfg.allow_smaller_size {
 					return error('Hash into smaller size than current key size was not allowed')

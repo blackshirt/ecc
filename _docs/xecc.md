@@ -1,7 +1,3 @@
-# xecc
-The `v` ecdsa module based on standard `crypto.ecdsa` module,
-but, its rewritten to use non-deprecated API on openssl 3.0.
-
 # module xecc
 
 
@@ -86,3 +82,5 @@ but, its rewritten to use non-deprecated API on openssl 3.0.
 
 ## SignerOpts
 [[Return to contents]](#Contents)
+
+#### Powered by vdoc. Generated on: 31 Jan 2025 01:35:09
