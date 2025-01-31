@@ -194,7 +194,7 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 	}
 }
 
-// PublicKey
+// PublicKey represents ECDSA public key part.
 pub struct PublicKey {
 	key &C.EVP_PKEY
 }

@@ -2,7 +2,7 @@
 The `v` ecdsa module based on standard `crypto.ecdsa` module,
 but, its rewritten to use non-deprecated API on openssl 3.0.
 
-## Contents
+## API Documentations
 - [PrivateKey.from_bytes](#PrivateKey.from_bytes)
 - [PrivateKey.from_string](#PrivateKey.from_string)
 - [PrivateKey.new](#PrivateKey.new)
@@ -11,15 +11,15 @@ but, its rewritten to use non-deprecated API on openssl 3.0.
 - [Nid](#Nid)
 - [CurveOptions](#CurveOptions)
 - [PrivateKey](#PrivateKey)
-  - [bytes](#pvkey_bytes)
+  - [bytes](#PrivateKey.bytes)
   - [dump_key](#PrivateKey.dump_key)
-  - [free](#pv_free)
-  - [public_key](#public_key)
-  - [sign](#sign)
+  - [free](#PrivateKey.free)
+  - [public_key](#PrivateKey.public_key)
+  - [sign](#PrivateKey.sign)
 - [PublicKey](#PublicKey)
-  - [bytes](#public_key_bytes)
-  - [dump_key](#pb_dump_key)
-  - [free](#pb_free)
+  - [bytes](#PublicKey.bytes)
+  - [dump_key](#PublicKey.dump_key)
+  - [free](#PublicKey.free)
   - [verify](#verify)
 - [SignerOpts](#SignerOpts)
 
@@ -124,9 +124,8 @@ LR3AGUldy+bBpV2nT306qCIwgUAMeOJP
 -----END PUBLIC KEY-----'
 
 fn main() {
-	pbkey := PublicKey.from_string(public_key_sample)!
+	pbkey := ecc.PublicKey.from_string(public_key_sample)!
 	// works with your public key
-
 
 	// release it
 	pbkey.free()
@@ -136,7 +135,7 @@ fn main() {
 ## HashConfig
 Config of hashing way in signing (verifying) process.
 See `SignerOpts` options for more detail.
-```v
+```codeblock
 pub enum HashConfig {
 	with_recommended_hash
 	with_no_hash
@@ -146,7 +145,7 @@ pub enum HashConfig {
 
 ## Nid
 The enum of currently supported curve(s)
-```v
+```codeblock
 pub enum Nid {
 	prime256v1
 	secp384r1
@@ -157,7 +156,7 @@ pub enum Nid {
 
 ## CurveOptions
 CurveOptions was an options for driving of the key creation.
-```v
+```codeblock
 @[params]
 pub struct CurveOptions {
 pub mut:
@@ -167,9 +166,9 @@ pub mut:
 ```
 
 ## PrivateKey
-[[Return to contents]](#Contents)
+PrivateKey represents ECDSA curve private key.
 
-## pvkey_bytes
+## PrivateKey.bytes
 [[Return to contents]](#Contents)
 
 ## PrivateKey.dump_key
@@ -181,7 +180,7 @@ Example:
 import ecc
 
 fn main() {
-	pvkey := ecc.PrivateKey.new(nid: .secp384r1)
+	pvkey := ecc.PrivateKey.new(nid: .secp384r1)!
 	out := pvkey.dump_key()!
 	dump(out)
 
@@ -209,19 +208,42 @@ Private-Key: (384 bit)
   NIST CURVE: P-384
   ```
 
-## pv_free
-[[Return to contents]](#Contents)
+## PrivateKey.free
+`free` releases memory occupied by this key.
 
-## public_key
-[[Return to contents]](#Contents)
+## PrivateKey.public_key
+`public_key` gets the public key from this PrivateKey.
 
-## sign
-[[Return to contents]](#Contents)
+## PrivateKey.sign
+`sign` signs the the message with the provided key and return the signature or error otherwise.
+If you dont provide the options, by default, it will precompute the digest (hash)
+of message before signing based on the size of underlying key.
+See the `SignerOpts` for more detail of options.
+
+Function signature: `fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8`
+
+Example:
+-------
+```v
+import ecc
+
+fn main() {
+	pkey := ecc.PrivateKey.new()!
+	pbkey := pkey.public_key()!
+	msg := 'MessageTobeSigned'.bytes()
+
+	sign_hashed := pkey.sign(msg)!
+	assert pbkey.verify(sign_hashed, msg)! == true
+
+	pvkey.free()
+	pbkey.free()
+}
+```
 
 ## PublicKey
-[[Return to contents]](#Contents)
+PublicKey represents ECDSA public key part.
 
-## public_key_bytes
+## PublicKey.bytes
 [[Return to contents]](#Contents)
 
 ## pb_dump_key
