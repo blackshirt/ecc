@@ -3,7 +3,7 @@ The `v` ecdsa module based on standard `crypto.ecdsa` module,
 but, its rewritten to use non-deprecated API on openssl 3.0.
 
 ## Contents
-- [PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey](#PrivateKey.from_bytes)
+- [PrivateKey.from_bytes](#PrivateKey.from_bytes)
 - [PrivateKey.from_string](#PrivateKey.from_string)
 - [PrivateKey.new](#PrivateKey.new)
 - [PublicKey.from_string](#PublicKey.from_string)
@@ -12,7 +12,7 @@ but, its rewritten to use non-deprecated API on openssl 3.0.
 - [CurveOptions](#CurveOptions)
 - [PrivateKey](#PrivateKey)
   - [bytes](#pvkey_bytes)
-  - [dump_key](#pv_dump_key)
+  - [dump_key](#PrivateKey.dump_key)
   - [free](#pv_free)
   - [public_key](#public_key)
   - [sign](#sign)
@@ -89,8 +89,10 @@ Example:
 import ecc
 
 fn main() {
-	// creates prime256v1 key
+	// creates default prime256v1 key
 	p256key := ecc.PrivateKey.new()!
+
+	// or you can create another supported curve(s)
 	psecp256k1key := ecc.PrivateKey.new(nid: .secp256k1)!
 	p384key := ecc.PrivateKey.new(nid: .secp384r1)!
 	p521key := ecc.PrivateKey.new(nid: .secp521r1)!
@@ -106,16 +108,63 @@ fn main() {
 ```
 
 ## PublicKey.from_string
-[[Return to contents]](#Contents)
+`PublicKey.from_string` loads a PublicKey from valid PEM-formatted string in s.
+
+Function signature: `fn PublicKey.from_string(s string) !PublicKey`
+
+Example:
+-------
+```v
+import ecc
+
+const public_key_sample = '-----BEGIN PUBLIC KEY-----
+MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE+P3rhFkT1fXHYbY3CpcBdh6xTC74MQFx
+cftNVD3zEPVzo//OalIVatY162ksg8uRWBdvFFuHZ9OMVXkbjwWwhcXP7qmI9rOS
+LR3AGUldy+bBpV2nT306qCIwgUAMeOJP
+-----END PUBLIC KEY-----'
+
+fn main() {
+	pbkey := PublicKey.from_string(public_key_sample)!
+	// works with your public key
+
+
+	// release it
+	pbkey.free()
+}
+```
 
 ## HashConfig
-[[Return to contents]](#Contents)
+Config of hashing way in signing (verifying) process.
+See `SignerOpts` options for more detail.
+```v
+pub enum HashConfig {
+	with_recommended_hash
+	with_no_hash
+	with_custom_hash
+}
+```
 
 ## Nid
-[[Return to contents]](#Contents)
+The enum of currently supported curve(s)
+```v
+pub enum Nid {
+	prime256v1
+	secp384r1
+	secp521r1
+	secp256k1
+}
+```
 
 ## CurveOptions
-[[Return to contents]](#Contents)
+CurveOptions was an options for driving of the key creation.
+```v
+@[params]
+pub struct CurveOptions {
+pub mut:
+	// default to NIST P-256 curve
+	nid Nid = .prime256v1
+}
+```
 
 ## PrivateKey
 [[Return to contents]](#Contents)
@@ -123,11 +172,24 @@ fn main() {
 ## pvkey_bytes
 [[Return to contents]](#Contents)
 
-## pv_dump_key
+## PrivateKey.dump_key
 `dump_key` represents PrivateKey in human readable string.
 
 Example:
 -------
+```v
+import ecc
+
+fn main() {
+	pvkey := ecc.PrivateKey.new(nid: .secp384r1)
+	out := pvkey.dump_key()!
+	dump(out)
+
+	// ...
+	pvkey.free()
+}
+```
+Produces similar something like this output:
 ```bash
 Private-Key: (384 bit)
   priv:
