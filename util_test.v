@@ -1,4 +1,4 @@
-module xecc
+module ecc
 
 import encoding.hex
 

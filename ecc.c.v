@@ -1,4 +1,4 @@
-module xecc
+module ecc
 
 // Contains the core wrappers of OpenSLL crypto API
 //

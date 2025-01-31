@@ -1,4 +1,4 @@
-module xecc
+module ecc
 
 // https://docs.openssl.org/3.0/man3/EVP_PKEY_fromdata/#selections
 const evp_pkey_key_parameters = C.EVP_PKEY_KEY_PARAMETERS

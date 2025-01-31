@@ -1,4 +1,4 @@
-module xecc
+module ecc
 
 // This file contains utility to load PrivateKey and PublicKey
 // from PEM formatted string.

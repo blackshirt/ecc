@@ -1,4 +1,4 @@
-module xecc
+module ecc
 
 // #define NID_sha256              672
 const nid_sha256 = C.NID_sha256

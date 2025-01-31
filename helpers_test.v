@@ -1,4 +1,4 @@
-module xecc
+module ecc
 
 import crypto.sha1
 import crypto.sha512
