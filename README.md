@@ -3,25 +3,29 @@ The `v` ecdsa module based on standard `crypto.ecdsa` module,
 but, its rewritten to use non-deprecated API on openssl 3.0.
 
 ## API Documentations
-- [PrivateKey.from_bytes](#PrivateKey.from_bytes)
-- [PrivateKey.from_string](#PrivateKey.from_string)
-- [PrivateKey.new](#PrivateKey.new)
-- [PublicKey.from_string](#PublicKey.from_string)
-- [HashConfig](#HashConfig)
-- [Nid](#Nid)
-- [CurveOptions](#CurveOptions)
 - [PrivateKey](#PrivateKey)
   - [bytes](#PrivateKey.bytes)
   - [dump_key](#PrivateKey.dump_key)
   - [free](#PrivateKey.free)
   - [public_key](#PrivateKey.public_key)
   - [sign](#PrivateKey.sign)
+- [PrivateKey.from_bytes](#PrivateKey.from_bytes)
+- [PrivateKey.from_string](#PrivateKey.from_string)
+- [PrivateKey.new](#PrivateKey.new)
 - [PublicKey](#PublicKey)
   - [bytes](#PublicKey.bytes)
   - [dump_key](#PublicKey.dump_key)
   - [free](#PublicKey.free)
   - [verify](#verify)
+- [PublicKey.from_string](#PublicKey.from_string)
+- [HashConfig](#HashConfig)
+- [Nid](#Nid)
+- [CurveOptions](#CurveOptions)
 - [SignerOpts](#SignerOpts)
+
+
+## PrivateKey
+PrivateKey represents ECDSA curve private key.
 
 ## PrivateKey.from_bytes
 `fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey`
@@ -107,69 +111,8 @@ fn main() {
 }
 ```
 
-## PublicKey.from_string
-`PublicKey.from_string` loads a PublicKey from valid PEM-formatted string in s.
-
-Function signature: `fn PublicKey.from_string(s string) !PublicKey`
-
-Example:
--------
-```v
-import ecc
-
-const public_key_sample = '-----BEGIN PUBLIC KEY-----
-MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE+P3rhFkT1fXHYbY3CpcBdh6xTC74MQFx
-cftNVD3zEPVzo//OalIVatY162ksg8uRWBdvFFuHZ9OMVXkbjwWwhcXP7qmI9rOS
-LR3AGUldy+bBpV2nT306qCIwgUAMeOJP
------END PUBLIC KEY-----'
-
-fn main() {
-	pbkey := ecc.PublicKey.from_string(public_key_sample)!
-	// works with your public key
-
-	// release it
-	pbkey.free()
-}
-```
-
-## HashConfig
-Config of hashing way in signing (verifying) process.
-See `SignerOpts` options for more detail.
-```codeblock
-pub enum HashConfig {
-	with_recommended_hash
-	with_no_hash
-	with_custom_hash
-}
-```
-
-## Nid
-The enum of currently supported curve(s)
-```codeblock
-pub enum Nid {
-	prime256v1
-	secp384r1
-	secp521r1
-	secp256k1
-}
-```
-
-## CurveOptions
-CurveOptions was an options for driving of the key creation.
-```codeblock
-@[params]
-pub struct CurveOptions {
-pub mut:
-	// default to NIST P-256 curve
-	nid Nid = .prime256v1
-}
-```
-
-## PrivateKey
-PrivateKey represents ECDSA curve private key.
-
 ## PrivateKey.bytes
-[[Return to contents]](#Contents)
+`bytes` gets underlying private key bytes
 
 ## PrivateKey.dump_key
 `dump_key` represents PrivateKey in human readable string.
@@ -240,20 +183,109 @@ fn main() {
 }
 ```
 
+## PublicKey.from_string
+`PublicKey.from_string` loads a PublicKey from valid PEM-formatted string in s.
+
+Function signature: `fn PublicKey.from_string(s string) !PublicKey`
+
+Example:
+-------
+```v
+import ecc
+
+const public_key_sample = '-----BEGIN PUBLIC KEY-----
+MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE+P3rhFkT1fXHYbY3CpcBdh6xTC74MQFx
+cftNVD3zEPVzo//OalIVatY162ksg8uRWBdvFFuHZ9OMVXkbjwWwhcXP7qmI9rOS
+LR3AGUldy+bBpV2nT306qCIwgUAMeOJP
+-----END PUBLIC KEY-----'
+
+fn main() {
+	pbkey := ecc.PublicKey.from_string(public_key_sample)!
+	// works with your public key
+
+	// release it
+	pbkey.free()
+}
+```
 ## PublicKey
 PublicKey represents ECDSA public key part.
 
 ## PublicKey.bytes
-[[Return to contents]](#Contents)
+`bytes` gets bytes of encoded public key bytes
 
-## pb_dump_key
-[[Return to contents]](#Contents)
+## PublicKey.dump_key
+`dump_key` represents public key in human readable string.
 
-## pb_free
-[[Return to contents]](#Contents)
+## PublicKey.free
+`free` releases the memory occupied by this key.
 
 ## verify
-[[Return to contents]](#Contents)
+verify verifies the signature whether this signature were a valid one for the message
+signed under the key and provided options. Its accepts options in opt to drive verify operation.
+As a note, verifying signature with options differs from the options used by the signing produces,
+would produce unmatching value (false).
+Dont forget to call `.free()` after you finished your work with the key
+
+Signature: `fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool`
 
 ## SignerOpts
-[[Return to contents]](#Contents)
+SignerOpts represents configuration options to drive signing and verifying process.
+Its currently supports three different scheme, in the form of `hash_config` config:
+- `with_recommended_hash`
+   	Its a default behaviour. By setting to this value means the signing (or verifying)
+	routine would do precomputing the hash (digest) of the message before signing (or verifying).
+	The default hash algorithm was choosen based on the size of underlying key,
+- `with_no_hash`
+	When using this option, the signing (or verifying) routine does not perform any prehashing
+	step to the message, and left message as is. Its also applied to messages that are already
+	in the form of digests, which are produced outside of context.
+- `with_custom_hash`
+	By setting `hash_config` into this value, its allow custom hashing routine through of
+	`hash.Hash` interface. By default its set to `sha256.Digest`. If you need the other one,
+	make sure you set `custom_hash` it into your desired hash. When you choose `custom_hash` that
+	produces hash smaller size than current key size, by default its not allowed.
+	You should set `allow_smaller_size` into `true` explicitly to allow this limit.
+	As a important note, hashing into smaller size was not recommended.
+
+```codeblock
+@[params]
+pub struct SignerOpts {
+pub mut:
+	hash_config        HashConfig = .with_recommended_hash
+	allow_smaller_size bool
+	custom_hash        &hash.Hash = sha256.new()
+}
+```
+
+## HashConfig
+Config of hashing way in signing (verifying) process.
+See `SignerOpts` options for more detail.
+```codeblock
+pub enum HashConfig {
+	with_recommended_hash
+	with_no_hash
+	with_custom_hash
+}
+```
+
+## Nid
+The enum of currently supported curve(s)
+```codeblock
+pub enum Nid {
+	prime256v1
+	secp384r1
+	secp521r1
+	secp256k1
+}
+```
+
+## CurveOptions
+CurveOptions was an options for driving of the key creation.
+```codeblock
+@[params]
+pub struct CurveOptions {
+pub mut:
+	// default to NIST P-256 curve
+	nid Nid = .prime256v1
+}
+```

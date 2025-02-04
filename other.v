@@ -1,17 +1,5 @@
 module ecc
 
-// https://docs.openssl.org/3.0/man3/EVP_PKEY_fromdata/#selections
-const evp_pkey_key_parameters = C.EVP_PKEY_KEY_PARAMETERS
-const evp_pkey_public_key = C.EVP_PKEY_PUBLIC_KEY
-const evp_pkey_keypair = C.EVP_PKEY_KEYPAIR
-
-// POINT_CONVERSION FORAMT
-const point_conversion_compressed = 2
-const point_conversion_uncompressed = 4
-const point_conversion_hybrid = 6
-// flag
-const openssl_ec_named_curve = C.OPENSSL_EC_NAMED_CURVE
-
 // from_bytes creates PrivateKey from provided bytes and options. The bytes length
 // should match with underlying curve key size intended to be created in options.
 pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {

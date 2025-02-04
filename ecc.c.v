@@ -26,7 +26,7 @@ fn C.EVP_PKEY_size(key &C.EVP_PKEY) int
 fn C.EVP_PKEY_new() &C.EVP_PKEY
 fn C.EVP_PKEY_free(key &C.EVP_PKEY)
 fn C.EVP_PKEY_keygen_init(ctx &C.EVP_PKEY_CTX) int // 1 success
-fn C.EVP_EC_gen(curve &u8) &C.EVP_PKEY
+fn C.EVP_PKEY_keygen(ctx &C.EVP_PKEY_CTX, ppkey &&C.EVP_PKEY) int
 fn C.EVP_PKEY_set_bn_param(pkey &C.EVP_PKEY, key_name &u8, bn &C.BIGNUM) int
 fn C.EVP_PKEY_eq(a &C.EVP_PKEY, b &C.EVP_PKEY) int
 fn C.EVP_PKEY_check(ctx &C.EVP_PKEY_CTX) int
@@ -44,7 +44,6 @@ fn C.EVP_PKEY_get0_description(key &C.EVP_PKEY) &char
 fn C.EVP_PKEY_get_id(pkey &C.EVP_PKEY) int
 fn C.EVP_PKEY_get_ec_point_conv_form(pkey &C.EVP_PKEY) int
 fn C.EVP_PKEY_get_group_name(pkey &C.EVP_PKEY, gname &u8, gname_sz u32, gname_len &usize) int
-fn C.EVP_PKEY_get0_EC_KEY(pkey &C.EVP_PKEY) &C.EC_KEY
 fn C.EVP_PKEY_public_check(pctx &C.EVP_PKEY_CTX) int
 fn C.EVP_PKEY_private_check(ctx &C.EVP_PKEY_CTX) int
 fn C.EVP_PKEY_print_public(out &C.BIO, pkey &C.EVP_PKEY, indent int, pctx voidptr) int

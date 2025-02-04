@@ -27,6 +27,18 @@ const nid_secp256k1 = C.NID_secp256k1
 const nid_ec_publickey = C.NID_X9_62_id_ecPublicKey
 // C.EVP_PKEY_EC = NID_X9_62_id_ecPublicKey
 const nid_evp_pkey_ec = C.EVP_PKEY_EC
+// flag for named curve
+const openssl_ec_named_curve = C.OPENSSL_EC_NAMED_CURVE
+
+// https://docs.openssl.org/3.0/man3/EVP_PKEY_fromdata/#selections
+const evp_pkey_key_parameters = C.EVP_PKEY_KEY_PARAMETERS
+const evp_pkey_public_key = C.EVP_PKEY_PUBLIC_KEY
+const evp_pkey_keypair = C.EVP_PKEY_KEYPAIR
+
+// POINT_CONVERSION FORAMT
+const point_conversion_compressed = 2
+const point_conversion_uncompressed = 4
+const point_conversion_hybrid = 6
 
 // CurveOptions was an options for driving of the key creation.
 @[params]
@@ -66,7 +78,7 @@ pub struct SignerOpts {
 pub mut:
 	hash_config        HashConfig = .with_recommended_hash
 	allow_smaller_size bool
-	custom_hash        hash.Hash = *sha256.new()
+	custom_hash        &hash.Hash = sha256.new()
 }
 
 // PrivateKey represents ECDSA curve private key.
@@ -78,27 +90,58 @@ pub struct PrivateKey {
 // Dont forget to call `.free()` after finish with your key to prevent memleak.
 pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
 	// we default to NIST P-256 prime256v1 curve.
-	mut nid := Nid.prime256v1
+	mut group_nid := nid_prime256v1
 	match opt.nid {
 		.prime256v1 {}
 		.secp384r1 {
-			nid = .secp384r1
+			group_nid = nid_secp384r1
 		}
 		.secp521r1 {
-			nid = .secp521r1
+			group_nid = nid_secp521r1
 		}
 		.secp256k1 {
-			nid = .secp256k1
+			group_nid = nid_secp256k1
 		}
 	}
-	group := nid.str()
-	pkey := C.EVP_EC_gen(voidptr(group.str))
-	if pkey == 0 {
-		C.EVP_PKEY_free(pkey)
-		return error('C.EVP_EC_gen failed')
+	// New high level keypair generator
+	evpkey := C.EVP_PKEY_new()
+	pctx := C.EVP_PKEY_CTX_new_id(nid_evp_pkey_ec, 0)
+	if pctx == 0 {
+		C.EVP_PKEY_free(evpkey)
+		C.EVP_PKEY_CTX_free(pctx)
+		return error('C.EVP_PKEY_CTX_new_id failed')
 	}
+	nt := C.EVP_PKEY_keygen_init(pctx)
+	if nt <= 0 {
+		C.EVP_PKEY_free(evpkey)
+		C.EVP_PKEY_CTX_free(pctx)
+		return error('EVP_PKEY_keygen_init failed')
+	}
+	// set the group (curve)
+	cn := C.EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, group_nid)
+	if cn <= 0 {
+		C.EVP_PKEY_free(evpkey)
+		C.EVP_PKEY_CTX_free(pctx)
+		return error('EVP_PKEY_CTX_set_ec_paramgen_curve_nid')
+	}
+	// explicitly set named curve flag, likely its the default on 3.0.
+	pn := C.EVP_PKEY_CTX_set_ec_param_enc(pctx, openssl_ec_named_curve)
+	if pn <= 0 {
+		C.EVP_PKEY_free(evpkey)
+		C.EVP_PKEY_CTX_free(pctx)
+		return error('EVP_PKEY_CTX_set_ec_param_enc failed')
+	}
+	// generates keypair
+	nr := C.EVP_PKEY_keygen(pctx, &evpkey)
+	if nr <= 0 {
+		C.EVP_PKEY_free(evpkey)
+		C.EVP_PKEY_CTX_free(pctx)
+		return error('EVP_PKEY_keygen failed')
+	}
+	// Cleans up the context
+	C.EVP_PKEY_CTX_free(pctx)
 	return PrivateKey{
-		key: pkey
+		key: evpkey
 	}
 }
 
@@ -251,14 +294,13 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 			cfg.custom_hash.reset()
 			_ := cfg.custom_hash.write(msg)!
 			msg_digest := cfg.custom_hash.sum([]u8{})
-			valid := verify_signature(pb.key, signature, msg_digest)
 
-			return valid
+			return verify_signature(pb.key, signature, msg_digest)
 		}
 	}
 }
 
-// enum of supported curve(s)
+// The enumerations of supported curve(s)
 pub enum Nid {
 	prime256v1
 	secp384r1
