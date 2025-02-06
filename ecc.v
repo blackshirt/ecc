@@ -81,6 +81,14 @@ pub mut:
 	custom_hash        &hash.Hash = sha256.new()
 }
 
+// The enumerations of supported curve(s)
+pub enum Nid {
+	prime256v1
+	secp384r1
+	secp521r1
+	secp256k1
+}
+
 // PrivateKey represents ECDSA curve private key.
 pub struct PrivateKey {
 	key &C.EVP_PKEY
@@ -124,7 +132,7 @@ pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
 		C.EVP_PKEY_CTX_free(pctx)
 		return error('EVP_PKEY_CTX_set_ec_paramgen_curve_nid')
 	}
-	// explicitly set named curve flag, likely its the default on 3.0.
+	// explicitly set the named curve flag, likely its the default on 3.0.
 	pn := C.EVP_PKEY_CTX_set_ec_param_enc(pctx, openssl_ec_named_curve)
 	if pn <= 0 {
 		C.EVP_PKEY_free(evpkey)
@@ -150,10 +158,9 @@ pub fn (pv &PrivateKey) free() {
 	C.EVP_PKEY_free(pv.key)
 }
 
-// public_key gets the public key from this PrivateKey.
+// public_key returns the PublicKey from this PrivateKey.
 // Its returns the new public key witth stripped private key bits.
-// Dont forget to call `.free()`
-// on this public key if you've finished with them.
+// Dont forget to call `.free()` on this public key if you've finished with them.
 pub fn (pv PrivateKey) public_key() !PublicKey {
 	bo := C.BIO_new(C.BIO_s_mem())
 	n := C.i2d_PUBKEY_bio(bo, pv.key)
@@ -300,13 +307,7 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 	}
 }
 
-// The enumerations of supported curve(s)
-pub enum Nid {
-	prime256v1
-	secp384r1
-	secp521r1
-	secp256k1
-}
+// Helpers
 
 // size returns the size of the key under the current NID curve.
 // Its here for simplify the access.
@@ -327,7 +328,7 @@ fn (n Nid) size() int {
 	}
 }
 
-// get underlying NID
+// to_int turns this Nid as a internal NID
 fn (n Nid) to_int() int {
 	match n {
 		.prime256v1 { return nid_prime256v1 }

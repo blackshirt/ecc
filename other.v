@@ -1,7 +1,11 @@
+// Copyright (c) blackshirt. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
 module ecc
 
-// from_bytes creates PrivateKey from provided bytes and options. The bytes length
-// should match with underlying curve key size intended to be created in options.
+// from_bytes creates a new PrivateKey from provided bytes and options.
+// The bytes length should match with underlying curve key size intended to be created
+// in supplied options.
 pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 	if bytes.len != opt.nid.size() {
 		return error('bytes length does not match with curve provided')

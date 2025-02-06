@@ -1,11 +1,7 @@
+// Copyright (c) blackshirt. All rights reserved.
+// Use of this source code is governed by an MIT license
+// that can be found in the LICENSE file.
 module ecc
-
-// #define NID_sha256              672
-const nid_sha256 = C.NID_sha256
-// #define NID_sha384              673
-const nid_sha384 = C.NID_sha384
-// #define NID_sha512              674
-const nid_sha512 = C.NID_sha512
 
 // Helpers
 //
@@ -93,8 +89,7 @@ fn verify_signature(key &C.EVP_PKEY, sig []u8, digest []u8) bool {
 	return res == 1
 }
 
-// get type name of the key.
-// Its return type of the key, ie, `EC`, `DSA`, `RSA` or other value.
+// key_type_name returns the type name of the key, ie, `EC`, `DSA`, `RSA` or other value.
 fn key_type_name(key &C.EVP_PKEY) !string {
 	s := voidptr(C.EVP_PKEY_get0_type_name(key))
 	if s == 0 {
@@ -104,7 +99,7 @@ fn key_type_name(key &C.EVP_PKEY) !string {
 	return tpname
 }
 
-// get the human readable description from the key.
+// key_description returns the human readable description from the key.
 fn key_description(key &C.EVP_PKEY) !string {
 	s := voidptr(C.EVP_PKEY_get0_description(key))
 	if s == 0 {
@@ -116,7 +111,7 @@ fn key_description(key &C.EVP_PKEY) !string {
 
 const default_groupname_bufsize = 25 // short name commonly only take 10-15 length
 
-// key_group_name gets the underlying group of the key as a string.
+// key_group_name returns underlying group name of the key as a string.
 fn key_group_name(key &C.EVP_PKEY) !string {
 	gname := []u8{len: default_groupname_bufsize}
 	gname_len := usize(0)
@@ -130,6 +125,7 @@ fn key_group_name(key &C.EVP_PKEY) !string {
 	return group
 }
 
+// key_conversion_format gets point conversion format from the key.
 fn key_conversion_format(key &C.EVP_PKEY) !int {
 	n := C.EVP_PKEY_get_ec_point_conv_form(key)
 	if n == 0 {
@@ -138,6 +134,7 @@ fn key_conversion_format(key &C.EVP_PKEY) !int {
 	return n
 }
 
+// ec_point_mult performs point multiplications, point = bn * generator
 fn ec_point_mult(group &C.EC_GROUP, bn &C.BIGNUM) !&C.EC_POINT {
 	// Create a new EC_POINT object for the public key
 	point := C.EC_POINT_new(group)
@@ -165,14 +162,16 @@ const default_point_bufsize = 160 // 2 * 64 + 1 + extra
 fn point_2_buf(group &C.EC_GROUP, point &C.EC_POINT, fmt int) ![]u8 {
 	ctx := C.BN_CTX_new()
 	buf := []u8{len: default_point_bufsize}
+	// EC_POINT_point2buf() allocates a buffer of suitable length and writes an EC_POINT to it in octet format.
+	// The allocated buffer is written to *pbuf and its length is returned.
+	// The caller must free up the allocated buffer with a call to OPENSSL_free().
+	// Since the allocated buffer value is written to *pbuf the pbuf parameter MUST NOT be NULL.
 	n := C.EC_POINT_point2buf(group, point, fmt, voidptr(&buf.data), ctx)
 	if n <= 0 {
 		C.BN_CTX_free(ctx)
 		C.OPENSSL_free(voidptr(&buf.data))
 		return error('Get null length of buf')
 	}
-	// mut dst := []u8{len: n}
-	//_ := copy(mut dst, buf)
 	result := buf[..n].clone()
 	C.OPENSSL_free(voidptr(buf.data))
 	C.BN_CTX_free(ctx)
