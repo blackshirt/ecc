@@ -89,7 +89,7 @@ pub enum Nid {
 	secp256k1
 }
 
-// PrivateKey represents ECDSA curve private key.
+// PrivateKey represents ECDSA private key.
 pub struct PrivateKey {
 	key &C.EVP_PKEY
 }
@@ -153,13 +153,13 @@ pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
 	}
 }
 
-// free releases memory occupied by this key.
+// free releases memory occupied by this private key.
 pub fn (pv &PrivateKey) free() {
 	C.EVP_PKEY_free(pv.key)
 }
 
-// public_key returns the PublicKey from this PrivateKey.
-// Its returns the new public key witth stripped private key bits.
+// public_key returns the PublicKey part from this PrivateKey.
+// Its returns the new public key with stripped off private key bits.
 // Dont forget to call `.free()` on this public key if you've finished with them.
 pub fn (pv PrivateKey) public_key() !PublicKey {
 	bo := C.BIO_new(C.BIO_s_mem())
@@ -244,12 +244,12 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 	}
 }
 
-// PublicKey represents ECDSA public key part.
+// PublicKey represents ECDSA public key.
 pub struct PublicKey {
 	key &C.EVP_PKEY
 }
 
-// free releases the memory occupied by this key.
+// free releases the memory occupied by this public key.
 pub fn (pb &PublicKey) free() {
 	C.EVP_PKEY_free(pb.key)
 }
@@ -258,7 +258,7 @@ pub fn (pb &PublicKey) free() {
 // signed under the key and provided options. Its accepts options in opt to drive verify operation.
 // As a note, verifying signature with options differs from the options used by the signing produces,
 // would produce unmatching value (false).
-// Dont forget to call `.free()` after you finished your work with the key.
+// Dont forget to call `.free()` after you finish with the key.
 pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 	if msg.len == 0 {
 		return error('Null-length message was not allowed')
@@ -328,7 +328,7 @@ fn (n Nid) size() int {
 	}
 }
 
-// to_int turns this Nid as a internal NID
+// to_int turns this Nid as an internal NID
 fn (n Nid) to_int() int {
 	match n {
 		.prime256v1 { return nid_prime256v1 }
