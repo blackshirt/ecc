@@ -5,14 +5,14 @@ module ecc
 
 // Helpers
 //
-// default_digest gets the default algorithm for this key.
+// default_digest gets the default digest (hash) algorithm for this key.
 fn default_digest(key &C.EVP_PKEY) !&C.EVP_MD {
 	// get bits size of this key
 	bits_size := C.EVP_PKEY_get_bits(key)
 	if bits_size <= 0 {
 		return error(' this size isnt available.')
 	}
-	// based on this bits_size, choose appropriate digest
+	// based on this bits_size, choose appropriate digest algorithm
 	match true {
 		bits_size <= 256 {
 			return voidptr(C.EVP_sha256())
@@ -35,17 +35,16 @@ fn sign_digest(key &C.EVP_PKEY, digest []u8) ![]u8 {
 	ctx := C.EVP_PKEY_CTX_new(key, 0)
 	if ctx == 0 {
 		C.EVP_PKEY_CTX_free(ctx)
-		return error('Fails on EVP_PKEY_CTX_new')
+		return error('EVP_PKEY_CTX_new failed')
 	}
 	sin := C.EVP_PKEY_sign_init(ctx)
 	if sin != 1 {
 		C.EVP_PKEY_CTX_free(ctx)
-		return error('fails on EVP_PKEY_sign_init')
+		return error('EVP_PKEY_sign_init failed')
 	}
 
-	// siglen to store the size of the sigC.EVP_MD_get_size(md)nature
-	// when EVP_PKEY_sign called with NULL sig, siglen will tell maximum size
-	// of signature.
+	// siglen was used to store the size of the signature output. When EVP_PKEY_sign 
+	// was called with NULL signature buffer, siglen will tell maximum size of signature.
 	siglen := usize(C.EVP_PKEY_size(key))
 	st := C.EVP_PKEY_sign(ctx, 0, &siglen, digest.data, digest.len)
 	if st <= 0 {
@@ -58,7 +57,7 @@ fn sign_digest(key &C.EVP_PKEY, digest []u8) ![]u8 {
 		C.EVP_PKEY_CTX_free(ctx)
 		return error('EVP_PKEY_sign fails to sign message')
 	}
-	// siglen now contains actual length of the sig buffer.
+	// siglen now contains actual length of the signature buffer.
 	signed := sig[..siglen].clone()
 
 	// Cleans up
