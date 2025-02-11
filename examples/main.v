@@ -1,6 +1,6 @@
 // Copyright @blackshirt 2025
 //
-import x.crypto.ecc
+import ecc
 
 fn main() {
 	// creates a new default key

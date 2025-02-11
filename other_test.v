@@ -56,7 +56,8 @@ fn test_prime256v1_curve_sign_verify_custom_hash() ! {
 	assert valid0 == true
 	// lets compares with pbkey.sign with no hash
 	opt0 := SignerOpts{
-		hash_config: .with_no_hash
+		hash_config:        .with_no_hash
+		allow_smaller_size: true
 	}
 	valid0_1 := pbkey.verify(sig0, msg, opt0)!
 	assert valid0_1 == true

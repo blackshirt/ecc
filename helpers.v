@@ -30,7 +30,7 @@ fn default_digest(key &C.EVP_PKEY) !&C.EVP_MD {
 	return error('should not here')
 }
 
-// sign_digest signs the digest with the key. Under the hood, EVP_PKEY_sign() does not 
+// sign_digest signs the digest with the key. Under the hood, EVP_PKEY_sign() does not
 // hash the data to be signed, and therefore is normally used to sign digests.
 fn sign_digest(key &C.EVP_PKEY, digest []u8) ![]u8 {
 	ctx := C.EVP_PKEY_CTX_new(key, 0)
@@ -43,7 +43,7 @@ fn sign_digest(key &C.EVP_PKEY, digest []u8) ![]u8 {
 		C.EVP_PKEY_CTX_free(ctx)
 		return error('EVP_PKEY_sign_init failed')
 	}
-	// siglen was used to store the size of the signature output. When EVP_PKEY_sign 
+	// siglen was used to store the size of the signature output. When EVP_PKEY_sign
 	// was called with NULL signature buffer, siglen will tell maximum size of signature.
 	siglen := usize(C.EVP_PKEY_size(key))
 	st := C.EVP_PKEY_sign(ctx, 0, &siglen, digest.data, digest.len)

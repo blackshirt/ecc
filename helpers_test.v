@@ -45,8 +45,8 @@ fn test_key_sign_n_verify_signature() ! {
 	sign_without_hashed := sign_digest(pkey.key, msg)!
 	assert verify_signature(pbkey.key, sign_without_hashed, msg) == true
 
-	sign_nohash := pkey.sign(msg, hash_config: .with_no_hash)!
-	assert pbkey.verify(sign_nohash, msg, hash_config: .with_no_hash)! == true
+	sign_nohash := pkey.sign(msg, hash_config: .with_no_hash, allow_smaller_size: true)!
+	assert pbkey.verify(sign_nohash, msg, hash_config: .with_no_hash, allow_smaller_size: true)! == true
 	assert verify_signature(pbkey.key, sign_nohash, msg) == true
 
 	pkey.free()
