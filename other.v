@@ -190,6 +190,19 @@ pub fn (pb PublicKey) bytes() ![]u8 {
 	return pbk_bytes
 }
 
+// encoded_pubkey gets encoded public key with EVP_PKEY_get1_encoded_public_key
+fn (pb PublicKey) encoded_pubkey() ![]u8 {
+	ppub := []u8{len: default_point_bufsize}
+	n := C.EVP_PKEY_get1_encoded_public_key(pb.key, &ppub.data)
+	if n <= 0 {
+		unsafe { ppub.free() }
+		return error('EVP_PKEY_get1_encoded_public_key failed')
+	}
+	out := ppub[..n].clone()
+	unsafe { ppub.free() }
+	return out
+}
+
 // constant of buffer size for bio read
 const default_bioread_bufsize = 1024
 

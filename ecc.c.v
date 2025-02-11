@@ -60,6 +60,7 @@ fn C.EVP_PKEY_fromdata_init(ctx &C.EVP_PKEY_CTX) int
 fn C.EVP_PKEY_fromdata(ctx &C.EVP_PKEY_CTX, ppkey &&C.EVP_PKEY, selection int, params &C.OSSL_PARAM) int
 fn C.EVP_PKEY_get_default_digest_nid(pkey &C.EVP_PKEY, pnid &int) int
 fn C.EVP_get_digestbynid(nid int) &C.EVP_MD
+fn C.EVP_PKEY_get1_encoded_public_key(pkey &C.EVP_PKEY, ppub &u8) int //; size_t
 
 @[typedef]
 struct C.EVP_PKEY_CTX {}

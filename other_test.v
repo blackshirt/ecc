@@ -23,6 +23,7 @@ fn test_create_private_key_from_bytes() ! {
 
 	pbkey := pvkey.public_key()!
 	assert pbkey.bytes()! == pub_data
+	assert pbkey.encoded_pubkey()! == pub_data
 
 	// Lets signing and verifying message
 	msg := 'MessageTobeSigned'.bytes()

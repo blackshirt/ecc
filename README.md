@@ -221,6 +221,39 @@ PublicKey represents ECDSA public key part.
 ## PublicKey.dump_key
 `dump_key` represents public key in human readable string.
 
+Example:
+--------
+```v
+import ecc
+
+const public_key_sample = '-----BEGIN PUBLIC KEY-----
+MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAE+P3rhFkT1fXHYbY3CpcBdh6xTC74MQFx
+cftNVD3zEPVzo//OalIVatY162ksg8uRWBdvFFuHZ9OMVXkbjwWwhcXP7qmI9rOS
+LR3AGUldy+bBpV2nT306qCIwgUAMeOJP
+-----END PUBLIC KEY-----'
+
+fn main() {
+	pbkey := ecc.PublicKey.from_string(public_key_sample)!
+	out := pbkey.dump_key()!
+	dump(out)
+	pbkey.free()
+}
+```
+Produces something like this output:
+```bash
+  Public-Key: (384 bit)
+  pub:
+      04:f8:fd:eb:84:59:13:d5:f5:c7:61:b6:37:0a:97:
+      01:76:1e:b1:4c:2e:f8:31:01:71:71:fb:4d:54:3d:
+      f3:10:f5:73:a3:ff:ce:6a:52:15:6a:d6:35:eb:69:
+      2c:83:cb:91:58:17:6f:14:5b:87:67:d3:8c:55:79:
+      1b:8f:05:b0:85:c5:cf:ee:a9:88:f6:b3:92:2d:1d:
+      c0:19:49:5d:cb:e6:c1:a5:5d:a7:4f:7d:3a:a8:22:
+      30:81:40:0c:78:e2:4f
+  ASN1 OID: secp384r1
+  NIST CURVE: P-384
+```
+
 ## PublicKey.free
 `free` releases the memory occupied by this key.
 
