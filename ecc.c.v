@@ -113,6 +113,7 @@ fn C.BN_new() &C.BIGNUM
 fn C.BN_free(a &C.BIGNUM)
 fn C.BN_bn2bin(a &C.BIGNUM, to &u8) int
 fn C.BN_bn2binpad(a &C.BIGNUM, to &u8, tolen int) int
+fn C.BN_bn2nativepad(a &C.BIGNUM, to &u8, tolen int) int
 fn C.BN_num_bytes(a &C.BIGNUM) int
 fn C.BN_bin2bn(s &u8, len int, ret &C.BIGNUM) &C.BIGNUM
 
