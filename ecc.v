@@ -272,13 +272,12 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 	if msg.len == 0 {
 		return error('Null-length message was not allowed')
 	}
-	mut cfg := opt
 	bits_size := C.EVP_PKEY_get_bits(pb.key)
 	if bits_size <= 0 {
 		return error(' bits_size was invalid')
 	}
 	key_size := (bits_size + 7) / 8
-	match cfg.hash_config {
+	match opt.hash_config {
 		.with_no_hash {
 			if msg.len > key_size || msg.len > max_digest_size {
 				return error('Unmatching msg size, use .with_recommended_hash options instead')
@@ -307,6 +306,7 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 			return fin == 1
 		}
 		.with_custom_hash {
+			mut cfg := opt
 			if cfg.custom_hash.size() < key_size {
 				if !cfg.allow_smaller_size {
 					return error('Hash into smaller size than current key size was not allowed')
