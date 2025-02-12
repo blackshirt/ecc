@@ -337,7 +337,8 @@ fn (n Nid) size() int {
 			return 48
 		}
 		.secp521r1 {
-			return 64
+			// 521 bits was 66 bytes
+			return 66
 		}
 	}
 }
