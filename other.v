@@ -16,10 +16,9 @@ pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 		return error('EVP_PKEY_new failed')
 	}
 	// convert bytes to BIGNUM.
-	// Notes: In real applications, BIGNUMs would be handled and converted to byte arrays with BN_bn2nativepad().
-	priv := C.BN_bn2nativepad(bytes.data, bytes.len, 0)
-	if priv == 0 {
-		C.BN_free(priv)
+	bn := C.BN_bin2bn(bytes.data, bytes.len, 0)
+	if bn == 0 {
+		C.BN_free(bn)
 		C.EVP_PKEY_free(pkey)
 		return error('BN_bin2bn failed from bytes')
 	}
@@ -27,11 +26,11 @@ pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 	group := C.EC_GROUP_new_by_curve_name(opt.nid.to_int())
 	if group == 0 {
 		C.EC_GROUP_free(group)
-		C.BN_free(priv)
+		C.BN_free(bn)
 		C.EVP_PKEY_free(pkey)
 		return error('EC_GROUP_new_by_curve_name failed')
 	}
-	point := ec_point_mult(group, priv)!
+	point := ec_point_mult(group, bn)!
 	pub_bytes := point_2_buf(group, point, point_conversion_uncompressed)!
 
 	param_bld := C.OSSL_PARAM_BLD_new()
@@ -39,12 +38,12 @@ pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 
 	n := C.OSSL_PARAM_BLD_push_utf8_string(param_bld, voidptr('group'.str), voidptr(opt.nid.str().str),
 		0)
-	m := C.OSSL_PARAM_BLD_push_BN(param_bld, voidptr('priv'.str), priv)
+	m := C.OSSL_PARAM_BLD_push_BN(param_bld, voidptr('priv'.str), bn)
 	o := C.OSSL_PARAM_BLD_push_octet_string(param_bld, voidptr('pub'.str), pub_bytes.data,
 		pub_bytes.len)
 	if n <= 0 || m <= 0 || o <= 0 {
 		C.EC_POINT_free(point)
-		C.BN_free(priv)
+		C.BN_free(bn)
 		C.EC_GROUP_free(group)
 		C.OSSL_PARAM_BLD_free(param_bld)
 		C.EVP_PKEY_free(pkey)
@@ -56,7 +55,7 @@ pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 	pctx := C.EVP_PKEY_CTX_new_id(nid_evp_pkey_ec, 0)
 	if params == 0 || pctx == 0 {
 		C.EC_POINT_free(point)
-		C.BN_free(priv)
+		C.BN_free(bn)
 		C.EC_GROUP_free(group)
 		C.OSSL_PARAM_BLD_free(param_bld)
 		C.OSSL_PARAM_free(params)
@@ -71,7 +70,7 @@ pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 	q := C.EVP_PKEY_fromdata(pctx, &pkey, evp_pkey_keypair, params)
 	if p <= 0 || q <= 0 {
 		C.EC_POINT_free(point)
-		C.BN_free(priv)
+		C.BN_free(bn)
 		C.EC_GROUP_free(group)
 		C.OSSL_PARAM_BLD_free(param_bld)
 		C.OSSL_PARAM_free(params)
@@ -86,7 +85,7 @@ pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 	}
 	// Cleans up
 	C.EC_POINT_free(point)
-	C.BN_free(priv)
+	C.BN_free(bn)
 	C.EC_GROUP_free(group)
 	C.OSSL_PARAM_BLD_free(param_bld)
 	C.OSSL_PARAM_free(params)
@@ -194,7 +193,7 @@ pub fn (pb PublicKey) bytes() ![]u8 {
 // encoded_pubkey gets encoded public key with EVP_PKEY_get1_encoded_public_key
 fn (pb PublicKey) encoded_pubkey() ![]u8 {
 	ppub := []u8{len: default_point_bufsize}
-	n := C.EVP_PKEY_get1_encoded_public_key(pb.key, &ppub.data)
+	n := C.EVP_PKEY_get1_encoded_public_key(pb.key, voidptr(&ppub.data))
 	if n <= 0 {
 		unsafe { ppub.free() }
 		return error('EVP_PKEY_get1_encoded_public_key failed')
