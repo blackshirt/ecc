@@ -15,8 +15,9 @@ pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 		C.EVP_PKEY_free(pkey)
 		return error('EVP_PKEY_new failed')
 	}
-	// convert bytes to bignum
-	priv := C.BN_bin2bn(bytes.data, bytes.len, 0)
+	// convert bytes to BIGNUM.
+	// Notes: In real applications, BIGNUMs would be handled and converted to byte arrays with BN_bn2nativepad().
+	priv := C.BN_bn2nativepad(bytes.data, bytes.len, 0)
 	if priv == 0 {
 		C.BN_free(priv)
 		C.EVP_PKEY_free(pkey)
