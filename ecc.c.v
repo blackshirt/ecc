@@ -13,7 +13,6 @@ module ecc
 #flag darwin -L/usr/local/opt/openssl/lib
 #include <openssl/obj_mac.h>
 #include <openssl/evp.h>
-#include <openssl/ec.h>
 #include <openssl/param_build.h>
 #include <openssl/types.h>
 #include <openssl/bio.h>
@@ -140,9 +139,6 @@ fn C.EC_GROUP_get_degree(g &C.EC_GROUP) int
 fn C.EC_GROUP_get_curve_name(g &C.EC_GROUP) int
 fn C.EC_GROUP_new_by_curve_name(nid int) &C.EC_GROUP
 fn C.EC_GROUP_check(group &C.EC_GROUP, ctx &C.BN_CTX) int
-
-@[typedef]
-struct C.EC_KEY {}
 
 // Wrapper of digest and signing related of the C opaque and functions.
 @[typedef]
