@@ -86,10 +86,10 @@ pub mut:
 
 // The enumerations of supported curve(s)
 pub enum Nid {
-	prime256v1
-	secp384r1
-	secp521r1
-	secp256k1
+	prime256v1 = C.NID_X9_62_prime256v1
+	secp384r1  = C.NID_secp384r1
+	secp521r1  = C.NID_secp521r1
+	secp256k1  = C.NID_secp256k1
 }
 
 // PrivateKey represents ECDSA private key.
@@ -100,20 +100,6 @@ pub struct PrivateKey {
 // PrivateKey.new creates a new PrivateKey. Its default to prime256v1 key.
 // Dont forget to call `.free()` after finish with your key to prevent memleak.
 pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
-	// we default to NIST P-256 prime256v1 curve.
-	mut group_nid := nid_prime256v1
-	match opt.nid {
-		.prime256v1 {}
-		.secp384r1 {
-			group_nid = nid_secp384r1
-		}
-		.secp521r1 {
-			group_nid = nid_secp521r1
-		}
-		.secp256k1 {
-			group_nid = nid_secp256k1
-		}
-	}
 	// New high level keypair generator
 	evpkey := C.EVP_PKEY_new()
 	pctx := C.EVP_PKEY_CTX_new_id(nid_evp_pkey_ec, 0)
@@ -128,8 +114,8 @@ pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
 		C.EVP_PKEY_CTX_free(pctx)
 		return error('EVP_PKEY_keygen_init failed')
 	}
-	// set the group (curve)
-	cn := C.EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, group_nid)
+	// set the group (curve) based on the NID
+	cn := C.EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, int(opt.nid))
 	if cn <= 0 {
 		C.EVP_PKEY_free(evpkey)
 		C.EVP_PKEY_CTX_free(pctx)
@@ -149,7 +135,7 @@ pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
 		C.EVP_PKEY_CTX_free(pctx)
 		return error('EVP_PKEY_keygen failed')
 	}
-	// Cleans up the context
+	// Cleans up the context and return the key
 	C.EVP_PKEY_CTX_free(pctx)
 	return PrivateKey{
 		key: evpkey
@@ -198,7 +184,7 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 			}
 			if msg.len < key_size {
 				if !opt.allow_smaller_size {
-					return error('Use allow_smaller_size explicitly')
+					return error('Use allow_smaller_size option explicitly')
 				}
 			}
 			return sign_digest(pv.key, msg)

@@ -195,11 +195,12 @@ fn (pb PublicKey) encoded_pubkey() ![]u8 {
 	ppub := []u8{len: default_point_bufsize}
 	n := C.EVP_PKEY_get1_encoded_public_key(pb.key, voidptr(&ppub.data))
 	if n <= 0 {
-		unsafe { ppub.free() }
+		C.OPENSSL_free(voidptr(ppub.data))
 		return error('EVP_PKEY_get1_encoded_public_key failed')
 	}
 	out := ppub[..n].clone()
-	unsafe { ppub.free() }
+	// ppub should be freed by calling `OPENSSL_free` or memleak happens.
+	C.OPENSSL_free(voidptr(ppub.data))
 	return out
 }
 

@@ -13,6 +13,7 @@ module ecc
 #flag darwin -L/usr/local/opt/openssl/lib
 #include <openssl/obj_mac.h>
 #include <openssl/evp.h>
+#include <openssl/ec.h>
 #include <openssl/param_build.h>
 #include <openssl/types.h>
 #include <openssl/bio.h>
