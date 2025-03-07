@@ -6,13 +6,13 @@ import crypto.sha256
 // Constants of short name of the supported curve(s)
 //
 // #define SN_secp256k1            "secp256k1"
-const sn_secp256k1 = 'secp256k1'
+const sn_secp256k1 = unsafe { cstring_to_vstring(&char(C.SN_secp256k1)) } // 'secp256k1'
 // #define SN_secp384r1            "secp384r1"
-const sn_secp384r1 = 'secp384r1'
+const sn_secp384r1 = unsafe { cstring_to_vstring(&char(C.SN_secp384r1)) } // 'secp384r1'
 // #define SN_secp521r1            "secp521r1"
-const sn_secp521r1 = 'secp521r1'
+const sn_secp521r1 = unsafe { cstring_to_vstring(&char(C.SN_secp521r1)) } // 'secp521r1'
 // #define SN_X9_62_prime256v1     "prime256v1"
-const sn_prime256v1 = 'prime256v1'
+const sn_prime256v1 = unsafe { cstring_to_vstring(&char(C.SN_X9_62_prime256v1)) } // 'prime256v1'
 
 // NIST P-256 prime256v1 curve (or secp256r1)
 const nid_prime256v1 = C.NID_X9_62_prime256v1
