@@ -176,3 +176,23 @@ fn point_2_buf(group &C.EC_GROUP, point &C.EC_POINT, fmt int) ![]u8 {
 	C.BN_CTX_free(ctx)
 	return result
 }
+
+fn group_str_to_charname(s string) !&char {
+	match s {
+		'prime256v1' { return sn_prime256v1 }
+		'secp384r1' { return sn_secp384r1 }
+		'secp521r1' { return sn_secp521r1 }
+		'secp256k1' { return sn_secp256k1 }
+		else { return error('Unsupported group charname') }
+	}
+}
+
+fn group_charname_to_str(gc &char) !string {
+	match gc {
+		sn_prime256v1 { return unsafe { sn_prime256v1.vstring() } }
+		sn_secp384r1 { return unsafe { sn_secp384r1.vstring() } }
+		sn_secp521r1 { return unsafe { sn_secp521r1.vstring() } }
+		sn_secp256k1 { return unsafe { sn_secp256k1.vstring() } }
+		else { return error('Unsupported group charname') }
+	}
+}

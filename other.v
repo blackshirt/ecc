@@ -23,7 +23,7 @@ pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 		return error('BN_bin2bn failed from bytes')
 	}
 	// build public key bytes
-	group := C.EC_GROUP_new_by_curve_name(opt.nid.to_int())
+	group := C.EC_GROUP_new_by_curve_name(int(opt.nid))
 	if group == 0 {
 		C.EC_GROUP_free(group)
 		C.BN_free(bn)
@@ -36,11 +36,9 @@ pub fn PrivateKey.from_bytes(bytes []u8, opt CurveOptions) !PrivateKey {
 	param_bld := C.OSSL_PARAM_BLD_new()
 	assert param_bld != 0
 
-	n := C.OSSL_PARAM_BLD_push_utf8_string(param_bld, voidptr('group'.str), voidptr(opt.nid.str().str),
-		0)
-	m := C.OSSL_PARAM_BLD_push_BN(param_bld, voidptr('priv'.str), bn)
-	o := C.OSSL_PARAM_BLD_push_octet_string(param_bld, voidptr('pub'.str), pub_bytes.data,
-		pub_bytes.len)
+	n := C.OSSL_PARAM_BLD_push_utf8_string(param_bld, c'group', opt.nid.sn(), 0)
+	m := C.OSSL_PARAM_BLD_push_BN(param_bld, c'priv', bn)
+	o := C.OSSL_PARAM_BLD_push_octet_string(param_bld, c'pub', pub_bytes.data, pub_bytes.len)
 	if n <= 0 || m <= 0 || o <= 0 {
 		C.EC_POINT_free(point)
 		C.BN_free(bn)
@@ -155,7 +153,7 @@ pub fn (pv PrivateKey) dump_key() !string {
 // bytes gets underlying private key bytes
 pub fn (pv PrivateKey) bytes() ![]u8 {
 	bn := C.BN_new()
-	n := C.EVP_PKEY_get_bn_param(pv.key, voidptr('priv'.str), &bn)
+	n := C.EVP_PKEY_get_bn_param(pv.key, c'priv', &bn)
 	if n <= 0 {
 		C.BN_free(bn)
 		return []u8{}
@@ -178,8 +176,8 @@ pub fn (pv PrivateKey) bytes() ![]u8 {
 pub fn (pb PublicKey) bytes() ![]u8 {
 	size := usize(default_point_bufsize)
 	mut buf := []u8{len: int(size)}
-	mut g := C.EVP_PKEY_get_octet_string_param(pb.key, voidptr('encoded-pub-key'.str),
-		buf.data, buf.len, &size)
+	mut g := C.EVP_PKEY_get_octet_string_param(pb.key, c'encoded-pub-key', buf.data, buf.len,
+		&size)
 	if g <= 0 {
 		unsafe { buf.free() }
 		return error('EVP_PKEY_get_octet_string_param failed')

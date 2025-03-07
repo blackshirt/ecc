@@ -76,7 +76,7 @@ MFwCAQEEGDHV+WhJL2UjUhgMLh52k0RJjRebtu4HvqAHBgUrgQQAH6E0AzIABFyF
 UHhnmmVRraSwrVkPdYIeXhH/Ob4+8OLcwrQBMv4RXsD1GVFsgkvEYDTEb/vnMA==
 -----END EC PRIVATE KEY-----'
 	_ := PrivateKey.from_string(key) or {
-		assert err == error('Unsupported group')
+		assert err == error('Unsupported group charname')
 		return
 	}
 }

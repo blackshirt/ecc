@@ -51,8 +51,8 @@ pub fn PrivateKey.from_string(s string) !PrivateKey {
 	}
 	// Matching the supported group
 	group_name := key_group_name(evpkey)!
-	if group_name != sn_secp256k1 && group_name != sn_secp384r1 && group_name != sn_prime256v1
-		&& group_name != sn_prime256v1 {
+	gc := group_str_to_charname(group_name)!
+	if gc != sn_secp256k1 && gc != sn_secp384r1 && gc != sn_prime256v1 && gc != sn_prime256v1 {
 		C.BIO_free_all(bo)
 		C.EVP_PKEY_CTX_free(pctx)
 		C.EVP_PKEY_free(evpkey)
@@ -111,8 +111,8 @@ pub fn PublicKey.from_string(s string) !PublicKey {
 	}
 	// Matching the supported group
 	group_name := key_group_name(evpkey)!
-	if group_name != sn_secp256k1 && group_name != sn_secp384r1 && group_name != sn_prime256v1
-		&& group_name != sn_prime256v1 {
+	gc := group_str_to_charname(group_name)!
+	if gc != sn_secp256k1 && gc != sn_secp384r1 && gc != sn_prime256v1 && gc != sn_prime256v1 {
 		C.BIO_free_all(bo)
 		C.EVP_PKEY_CTX_free(pctx)
 		C.EVP_PKEY_free(evpkey)

@@ -3,16 +3,16 @@ module ecc
 import hash
 import crypto.sha256
 
-// Constants of short name of the supported curve(s)
+// Constant of shortname of the supported curve(s)
 //
-// #define SN_secp256k1            "secp256k1"
-const sn_secp256k1 = unsafe { cstring_to_vstring(&char(C.SN_secp256k1)) }
-// #define SN_secp384r1            "secp384r1"
-const sn_secp384r1 = unsafe { cstring_to_vstring(&char(C.SN_secp384r1)) }
-// #define SN_secp521r1            "secp521r1"
-const sn_secp521r1 = unsafe { cstring_to_vstring(&char(C.SN_secp521r1)) }
 // #define SN_X9_62_prime256v1     "prime256v1"
-const sn_prime256v1 = unsafe { cstring_to_vstring(&char(C.SN_X9_62_prime256v1)) }
+const sn_prime256v1 = &char(C.SN_X9_62_prime256v1)
+// #define SN_secp384r1            "secp384r1"
+const sn_secp384r1 = &char(C.SN_secp384r1)
+// #define SN_secp521r1            "secp521r1"
+const sn_secp521r1 = &char(C.SN_secp521r1)
+// #define SN_secp256k1            "secp256k1"
+const sn_secp256k1 = &char(C.SN_secp256k1)
 
 // Constants of internal ID of the group (curve)
 //
@@ -333,15 +333,13 @@ fn (n Nid) size() int {
 	}
 }
 
-// to_int turns this Nid as an internal NID
-@[inline]
-fn (n Nid) to_int() int {
-	return int(n)
+fn (nid Nid) str() string {
+	return unsafe { nid.sn().vstring() }
 }
 
-// get string representation of this Nid
-fn (n Nid) str() string {
-	match n {
+// short name of this Nid as a &char
+fn (nid Nid) sn() &char {
+	match nid {
 		.prime256v1 { return sn_prime256v1 }
 		.secp384r1 { return sn_secp384r1 }
 		.secp521r1 { return sn_secp521r1 }

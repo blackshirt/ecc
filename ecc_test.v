@@ -14,7 +14,7 @@ fn test_pvkey_new_p256() ! {
 	assert C.EVP_PKEY_size(pkey.key) >= 2 * 32 // twice or more of key size
 	assert key_type_name(pkey.key)! == 'EC' // its type of EC key
 	assert key_description(pkey.key)! == 'OpenSSL EC implementation'
-	assert key_group_name(pkey.key)! == sn_prime256v1 // prime256v1
+	assert key_group_name(pkey.key)! == unsafe { sn_prime256v1.vstring() } // prime256v1
 	assert C.EVP_PKEY_get_security_bits(pkey.key) == 128
 	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == point_conversion_uncompressed
 	pkey.free()
@@ -28,7 +28,7 @@ fn test_pvkey_new_secp256k1() ! {
 	assert C.EVP_PKEY_size(pkey.key) >= 2 * 32 // twice or more of key size
 	assert key_type_name(pkey.key)! == 'EC' // its type of EC key
 	assert key_description(pkey.key)! == 'OpenSSL EC implementation'
-	assert key_group_name(pkey.key)! == sn_secp256k1 // secp256k1
+	assert key_group_name(pkey.key)! == unsafe { sn_secp256k1.vstring() } // secp256k1
 	assert C.EVP_PKEY_get_security_bits(pkey.key) == 128
 	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == point_conversion_uncompressed
 	pkey.free()
@@ -42,7 +42,7 @@ fn test_pvkey_new_p384() ! {
 	assert C.EVP_PKEY_size(pkey.key) >= 2 * 48 // twice or more of key size
 	assert key_type_name(pkey.key)! == 'EC' // its type of EC key
 	assert key_description(pkey.key)! == 'OpenSSL EC implementation'
-	assert key_group_name(pkey.key)! == sn_secp384r1 // secp384r1
+	assert key_group_name(pkey.key)! == unsafe { sn_secp384r1.vstring() } // secp384r1
 	assert C.EVP_PKEY_get_security_bits(pkey.key) == 192
 	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == point_conversion_uncompressed
 	pkey.free()
@@ -56,7 +56,7 @@ fn test_pvkey_new_p521() ! {
 	assert C.EVP_PKEY_size(pkey.key) >= 2 * 64 // twice or more of key size
 	assert key_type_name(pkey.key)! == 'EC' // its type of EC key
 	assert key_description(pkey.key)! == 'OpenSSL EC implementation'
-	assert key_group_name(pkey.key)! == sn_secp521r1 // secp521r1
+	assert key_group_name(pkey.key)! == unsafe { sn_secp521r1.vstring() } // secp521r1
 	assert C.EVP_PKEY_get_security_bits(pkey.key) == 256
 	assert C.EVP_PKEY_get_ec_point_conv_form(pkey.key) == point_conversion_uncompressed
 	pkey.free()
