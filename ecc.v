@@ -6,14 +6,16 @@ import crypto.sha256
 // Constants of short name of the supported curve(s)
 //
 // #define SN_secp256k1            "secp256k1"
-const sn_secp256k1 = unsafe { cstring_to_vstring(&char(C.SN_secp256k1)) } // 'secp256k1'
+const sn_secp256k1 = unsafe { cstring_to_vstring(&char(C.SN_secp256k1)) }
 // #define SN_secp384r1            "secp384r1"
-const sn_secp384r1 = unsafe { cstring_to_vstring(&char(C.SN_secp384r1)) } // 'secp384r1'
+const sn_secp384r1 = unsafe { cstring_to_vstring(&char(C.SN_secp384r1)) }
 // #define SN_secp521r1            "secp521r1"
-const sn_secp521r1 = unsafe { cstring_to_vstring(&char(C.SN_secp521r1)) } // 'secp521r1'
+const sn_secp521r1 = unsafe { cstring_to_vstring(&char(C.SN_secp521r1)) }
 // #define SN_X9_62_prime256v1     "prime256v1"
-const sn_prime256v1 = unsafe { cstring_to_vstring(&char(C.SN_X9_62_prime256v1)) } // 'prime256v1'
+const sn_prime256v1 = unsafe { cstring_to_vstring(&char(C.SN_X9_62_prime256v1)) }
 
+// Constants of internal ID of the group (curve)
+//
 // NIST P-256 prime256v1 curve (or secp256r1)
 const nid_prime256v1 = C.NID_X9_62_prime256v1
 // NIST P-384, ie, secp384r1 curve, defined as #define NID_secp384r1 715
@@ -23,6 +25,8 @@ const nid_secp521r1 = C.NID_secp521r1
 // Bitcoin curve, defined as #define NID_secp256k1 714
 const nid_secp256k1 = C.NID_secp256k1
 
+// Other defined constants.
+//
 // #define NID_X9_62_id_ecPublicKey   408
 const nid_ec_publickey = C.NID_X9_62_id_ecPublicKey
 // C.EVP_PKEY_EC = NID_X9_62_id_ecPublicKey
@@ -308,7 +312,7 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 }
 
 // Helpers
-
+//
 // size returns the size of the key under the current NID curve.
 // Its here for simplify the access.
 fn (n Nid) size() int {
@@ -330,13 +334,9 @@ fn (n Nid) size() int {
 }
 
 // to_int turns this Nid as an internal NID
+@[inline]
 fn (n Nid) to_int() int {
-	match n {
-		.prime256v1 { return nid_prime256v1 }
-		.secp384r1 { return nid_secp384r1 }
-		.secp521r1 { return nid_secp521r1 }
-		.secp256k1 { return nid_secp256k1 }
-	}
+	return int(n)
 }
 
 // get string representation of this Nid
