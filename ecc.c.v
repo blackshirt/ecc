@@ -33,6 +33,8 @@ fn C.EVP_PKEY_keygen(ctx &C.EVP_PKEY_CTX, ppkey &&C.EVP_PKEY) int
 fn C.EVP_PKEY_set_bn_param(pkey &C.EVP_PKEY, key_name &u8, bn &C.BIGNUM) int
 fn C.EVP_PKEY_eq(a &C.EVP_PKEY, b &C.EVP_PKEY) int
 fn C.EVP_PKEY_check(ctx &C.EVP_PKEY_CTX) int
+fn C.EVP_PKEY_dup(key &C.EVP_PKEY) &C.EVP_PKEY
+fn C.EVP_PKEY_set_bn_param(pkey &C.EVP_PKEY, key_name &char, bn &C.BIGNUM) int
 
 // non prehash signing (verifying)
 fn C.EVP_PKEY_sign(ctx &C.EVP_PKEY_CTX, sig &u8, siglen &usize, tbs &u8, tbslen int) int

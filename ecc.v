@@ -155,13 +155,12 @@ pub fn (pv &PrivateKey) free() {
 // Its returns the new public key with stripped off private key bits.
 // Dont forget to call `.free()` on this public key if you've finished with them.
 pub fn (pv PrivateKey) public_key() !PublicKey {
-	bo := C.BIO_new(C.BIO_s_mem())
-	n := C.i2d_PUBKEY_bio(bo, pv.key)
-	assert n != 0
-	// stores this bio as another key
-	pbkey := C.d2i_PUBKEY_bio(bo, 0)
-	C.BIO_free_all(bo)
-
+	pbkey := C.EVP_PKEY_dup(pv.key)
+	bn := C.BN_new()
+	n := C.EVP_PKEY_set_bn_param(pbkey, c'priv', bn)
+	assert n == 1
+	// cleansup
+	C.BN_free(bn)
 	return PublicKey{
 		key: pbkey
 	}

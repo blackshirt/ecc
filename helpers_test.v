@@ -13,6 +13,7 @@ fn test_key_sign_verify_internal_function() ! {
 	sign := sign_digest(pv.key, digest)!
 
 	pb := pv.public_key()!
+	dump(pb.dump_key()!)
 	verifieda := verify_signature(pb.key, sign, digest)
 	assert verifieda == true
 
