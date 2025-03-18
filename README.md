@@ -2,6 +2,10 @@
 The `v` ecdsa module based on standard `crypto.ecdsa` module,
 but, its rewritten to use non-deprecated API on openssl 3.0.
 
+> [!WARNING]  
+> Most of the functionality on this module has been ported into standard `crypto.ecdsa` module.
+> Use the standard `crypto.ecdsa` instead.
+
 ## Deviation from standard `crypto.ecdsa` module
 - This module rewritten with high level API, thats mean, maybe its doesn't work with the old.
 - This module doesn't supports for creating keys from arbitrary length of raw bytes (seed). Only the length matching with the key size was supported.

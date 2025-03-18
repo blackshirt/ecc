@@ -63,8 +63,8 @@ pub enum HashConfig {
 	with_custom_hash
 }
 
-// SignerOpts was configuration options to drive signing and verifying process.
-// Its currently supports three different scheme, in the form of `hash_config` config:
+// SignerOpts was configuration options to drive the signing and verifying process.
+// Its currently supports for three different schemes, in the form of `hash_config` option:
 // - `with_recommended_hash`
 //	 Its a default behaviour. By setting to this value means the signing (or verifying)
 //   routine would do precomputing the hash (digest) of the message before signing (or verifying).
@@ -78,7 +78,7 @@ pub enum HashConfig {
 //   `hash.Hash` interface. By default its set to `sha256.Digest`. If you need the other one,
 //   make sure you set `custom_hash` it into your desired hash. When you choose `custom_hash` that
 //   produces hash smaller size than current key size, by default its not allowed.
-//   You should set `allow_smaller_size` into `true` explicitly to allow this limit.
+//   You should explicitly set `allow_smaller_size` value into `true`  to overcome this limit.
 //	 As a important note, hashing into smaller size was not recommended.
 @[params]
 pub struct SignerOpts {
@@ -101,7 +101,7 @@ pub struct PrivateKey {
 	key &C.EVP_PKEY
 }
 
-// PrivateKey.new creates a new PrivateKey. Its default to prime256v1 key.
+// PrivateKey.new creates a new PrivateKey. Its default to `prime256v1` key.
 // Dont forget to call `.free()` after finish with your key to prevent memleak.
 pub fn PrivateKey.new(opt CurveOptions) !PrivateKey {
 	// New high level keypair generator
@@ -181,7 +181,7 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 	key_size := (bits_size + 7) / 8
 	match opt.hash_config {
 		.with_no_hash {
-			// treats msg as digest
+			// treats msg as a digest
 			if msg.len > key_size || msg.len > max_digest_size {
 				return error('Unmatching msg size, use .with_recommended_hash options instead')
 			}
@@ -203,23 +203,22 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 				C.EVP_MD_free(md)
 				return error('EVP_DigestSignInit failed')
 			}
-			siglen := usize(0)
-			mut n := C.EVP_DigestSign(ctx, 0, &siglen, msg.data, msg.len)
-			assert n > 0
-			sig := []u8{len: int(siglen)}
-			n = C.EVP_DigestSign(ctx, sig.data, &siglen, msg.data, msg.len)
+			siglen := usize(C.EVP_PKEY_size(pv.key))
+			buf := []u8{len: int(siglen)}
+			n := C.EVP_DigestSign(ctx, buf.data, &siglen, msg.data, msg.len)
 			if n <= 0 {
+				unsafe { buf.free() }
 				C.EVP_MD_CTX_free(ctx)
 				C.EVP_MD_free(md)
 				return error('EVP_DigestSign failed')
 			}
-			signed := sig[..int(siglen)].clone()
+			sig := buf[..int(siglen)].clone()
 			// cleans up
-			unsafe { sig.free() }
+			unsafe { buf.free() }
 			C.EVP_MD_CTX_free(ctx)
 			C.EVP_MD_free(md)
 
-			return signed
+			return sig
 		}
 		.with_custom_hash {
 			// make a copy of option
@@ -316,10 +315,7 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 // Its here for simplify the access.
 fn (n Nid) size() int {
 	match n {
-		.prime256v1 {
-			return 32
-		}
-		.secp256k1 {
+		.prime256v1, .secp256k1 {
 			return 32
 		}
 		.secp384r1 {
@@ -332,6 +328,7 @@ fn (n Nid) size() int {
 	}
 }
 
+// return Nid as a string.
 fn (nid Nid) str() string {
 	return unsafe { nid.sn().vstring() }
 }
