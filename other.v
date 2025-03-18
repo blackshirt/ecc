@@ -144,6 +144,7 @@ pub fn (pv PrivateKey) dump_key() !string {
 	}
 	output := buf[..size].clone()
 
+	// Cleans up and return the result
 	unsafe { buf.free() }
 	C.BIO_free_all(bo)
 

@@ -3,7 +3,7 @@ module ecc
 import hash
 import crypto.sha256
 
-// Constant of shortname of the supported curve(s)
+// Constants of shortname of the supported curve(s)
 //
 // #define SN_X9_62_prime256v1     "prime256v1"
 const sn_prime256v1 = &char(C.SN_X9_62_prime256v1)
@@ -14,7 +14,7 @@ const sn_secp521r1 = &char(C.SN_secp521r1)
 // #define SN_secp256k1            "secp256k1"
 const sn_secp256k1 = &char(C.SN_secp256k1)
 
-// Constants of internal ID of the group (curve)
+// Constants of internal ID of the groups (curves)
 //
 // NIST P-256 prime256v1 curve (or secp256r1)
 const nid_prime256v1 = C.NID_X9_62_prime256v1
@@ -58,14 +58,14 @@ pub mut:
 // Config of hashing way in signing (verifying) process.
 // See `SignerOpts` options for more detail.
 pub enum HashConfig {
-	with_recommended_hash
+	with_default_hash
 	with_no_hash
 	with_custom_hash
 }
 
 // SignerOpts was configuration options to drive the signing and verifying process.
-// Its currently supports for three different schemes, in the form of `hash_config` option:
-// - `with_recommended_hash`
+// Its currently supports for three of different schemes, in the form of `hash_config` option:
+// - `with_default_hash`
 //	 Its a default behaviour. By setting to this value means the signing (or verifying)
 //   routine would do precomputing the hash (digest) of the message before signing (or verifying).
 //   The default hash algorithm was choosen based on the size of underlying key,
@@ -83,7 +83,7 @@ pub enum HashConfig {
 @[params]
 pub struct SignerOpts {
 pub mut:
-	hash_config        HashConfig = .with_recommended_hash
+	hash_config        HashConfig = .with_default_hash
 	allow_smaller_size bool
 	custom_hash        &hash.Hash = sha256.new()
 }
@@ -155,12 +155,16 @@ pub fn (pv &PrivateKey) free() {
 // Its returns the new public key with stripped off private key bits.
 // Dont forget to call `.free()` on this public key if you've finished with them.
 pub fn (pv PrivateKey) public_key() !PublicKey {
+	// duplicates this key and strip off private bits
+	// by replacing it with null-bignum
 	pbkey := C.EVP_PKEY_dup(pv.key)
 	bn := C.BN_new()
 	n := C.EVP_PKEY_set_bn_param(pbkey, c'priv', bn)
 	assert n == 1
-	// cleansup
+
+	// cleans up
 	C.BN_free(bn)
+
 	return PublicKey{
 		key: pbkey
 	}
@@ -181,22 +185,22 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 	key_size := (bits_size + 7) / 8
 	match opt.hash_config {
 		.with_no_hash {
-			// treats msg as a digest
+			// with `.with_no_hash` options, we treat a message as a digest directly.
 			if msg.len > key_size || msg.len > max_digest_size {
-				return error('Unmatching msg size, use .with_recommended_hash options instead')
+				return error('Unmatching msg size, use .with_default_hash options instead')
 			}
 			if msg.len < key_size {
 				if !opt.allow_smaller_size {
-					return error('Use allow_smaller_size option explicitly')
+					return error('Use .allow_smaller_size option explicitly')
 				}
 			}
 			return sign_digest(pv.key, msg)
 		}
-		.with_recommended_hash {
-			// Otherwise, use the default hashing based on the key size.
+		.with_default_hash {
+			// Otherwise, use the default hashing algortihm based on the key size.
 			ctx := C.EVP_MD_CTX_new()
 			md := default_digest(pv.key)!
-
+			// initialize digest-ed signing operation
 			init := C.EVP_DigestSignInit(ctx, 0, md, 0, pv.key)
 			if init != 1 {
 				C.EVP_MD_CTX_free(ctx)
@@ -223,7 +227,10 @@ pub fn (pv PrivateKey) sign(msg []u8, opt SignerOpts) ![]u8 {
 		.with_custom_hash {
 			// make a copy of option
 			mut cfg := opt
-			// signing the message with provided custom hash
+			// when your digest output was smaller than the key size,
+			// you should set the .allow_smaller_size option into true flag.
+			// like the sha512 digest, where the digest output was 64 bytes long, with P-256 curve
+			// where the key size was 66 bytes, you need to set the option correctly.
 			if cfg.custom_hash.size() < key_size {
 				if !cfg.allow_smaller_size {
 					return error('Hash into smaller size than current key size was not allowed')
@@ -268,7 +275,7 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 	match opt.hash_config {
 		.with_no_hash {
 			if msg.len > key_size || msg.len > max_digest_size {
-				return error('Unmatching msg size, use .with_recommended_hash options instead')
+				return error('Unmatching msg size, use .with_default_hash options instead')
 			}
 			if msg.len < key_size {
 				if !opt.allow_smaller_size {
@@ -277,7 +284,7 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 			}
 			return verify_signature(pb.key, signature, msg)
 		}
-		.with_recommended_hash {
+		.with_default_hash {
 			ctx := C.EVP_MD_CTX_new()
 			md := default_digest(pb.key)!
 			init := C.EVP_DigestVerifyInit(ctx, 0, md, 0, pb.key)
@@ -312,7 +319,7 @@ pub fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !bool {
 // Helpers
 //
 // size returns the size of the key under the current NID curve.
-// Its here for simplify the access.
+// The curve key size was well-known infos. Its here for simplify the access.
 fn (n Nid) size() int {
 	match n {
 		.prime256v1, .secp256k1 {

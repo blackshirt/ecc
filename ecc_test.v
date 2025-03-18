@@ -66,7 +66,7 @@ fn test_key_sign_verify_with_smaller_custom_hash() ! {
 	pv := PrivateKey.new()!
 	msg_a := 'a'.repeat(300).bytes()
 	opt := SignerOpts{
-		hash_config: .with_recommended_hash
+		hash_config: .with_default_hash
 		custom_hash: sha1.new()
 	}
 

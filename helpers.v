@@ -46,22 +46,19 @@ fn sign_digest(key &C.EVP_PKEY, digest []u8) ![]u8 {
 	// siglen was used to store the size of the signature output. When EVP_PKEY_sign
 	// was called with NULL signature buffer, siglen will tell maximum size of signature.
 	siglen := usize(C.EVP_PKEY_size(key))
-	st := C.EVP_PKEY_sign(ctx, 0, &siglen, digest.data, digest.len)
-	if st <= 0 {
-		C.EVP_PKEY_CTX_free(ctx)
-		return error('Get null buffer length on EVP_PKEY_sign')
-	}
-	sig := []u8{len: int(siglen)}
-	do := C.EVP_PKEY_sign(ctx, sig.data, &siglen, digest.data, digest.len)
+	buf := []u8{len: int(siglen)}
+
+	do := C.EVP_PKEY_sign(ctx, buf.data, &siglen, digest.data, digest.len)
 	if do <= 0 {
 		C.EVP_PKEY_CTX_free(ctx)
+		unsafe { buf.free() }
 		return error('EVP_PKEY_sign fails to sign message')
 	}
 	// siglen now contains actual length of the signature buffer.
-	signed := sig[..siglen].clone()
+	signed := buf[..siglen].clone()
 
 	// Cleans up
-	unsafe { sig.free() }
+	unsafe { buf.free() }
 	C.EVP_PKEY_CTX_free(ctx)
 
 	return signed

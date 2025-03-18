@@ -273,15 +273,18 @@ Signature: `fn (pb PublicKey) verify(signature []u8, msg []u8, opt SignerOpts) !
 ## SignerOpts
 SignerOpts represents configuration options to drive signing and verifying process.
 Its currently supports three different scheme, in the form of `hash_config` config:
-- `with_recommended_hash`
+- `with_default_hash`
+
    	Its a default behaviour. By setting to this value means the signing (or verifying)
 	routine would do precomputing the hash (digest) of the message before signing (or verifying).
 	The default hash algorithm was choosen based on the size of underlying key,
 - `with_no_hash`
+
 	When using this option, the signing (or verifying) routine does not perform any prehashing
 	step to the message, and left message as is. Its also applied to messages that are already
 	in the form of digests, which are produced outside of context.
 - `with_custom_hash`
+
 	By setting `hash_config` into this value, its allow custom hashing routine through of
 	`hash.Hash` interface. By default its set to `sha256.Digest`. If you need the other one,
 	make sure you set `custom_hash` it into your desired hash. When you choose `custom_hash` that
@@ -293,7 +296,7 @@ Its currently supports three different scheme, in the form of `hash_config` conf
 @[params]
 pub struct SignerOpts {
 pub mut:
-	hash_config        HashConfig = .with_recommended_hash
+	hash_config        HashConfig = .with_default_hash
 	allow_smaller_size bool
 	custom_hash        &hash.Hash = sha256.new()
 }
@@ -304,7 +307,7 @@ Config of hashing way in signing (verifying) process.
 See `SignerOpts` options for more detail.
 ```codeblock
 pub enum HashConfig {
-	with_recommended_hash
+	with_default_hash
 	with_no_hash
 	with_custom_hash
 }
